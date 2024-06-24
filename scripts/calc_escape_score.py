@@ -32,7 +32,7 @@ def filter_expr_bind(
             if prop not in single_filters:
                 log_handle.write(f"Missing filter for {prop}. Skip {prop} single mut filter.\n")
                 continue
-            if not single_filters[prop].exists():
+            if not os.path.exists(single_filters[prop]):
                 log_handle.write(f"Missing file {single_filters[prop]}. Skip {prop} single mut filter.\n")
                 continue
 
@@ -69,43 +69,31 @@ def filter_expr_bind(
         log_handle.write("Skip single mut filter\n")
     
     # try to apply variant filters
-    if filter_on_variant and variant_filters is None:
+    if filter_on_variant and variant_filters is not None:
         for prop, thres in min_variant.items():
             if prop not in variant_filters:
                 log_handle.write(f"Missing filter for {prop}. Skip {prop} variant filter.\n")
                 continue
-            if not variant_filters[prop].exists():
-                log_handle.write(f"Missing file {variant_filters[prop]}. Skip {prop} variant filter.\n")
-                continue
-            var_filt_df = pd.read_csv(variant_filters[prop])
-            
-            required_cols = ['barcode', prop]
-            assert set(required_cols).issubset(var_filt_df.columns), f"Missing columns in {variant_filters[prop]}: {required_cols}"
-            
-            for col in ['library', 'target']:
-                if col in var_filt_df.columns:
-                    assert var_filt_df[col].nunique() == 1, f"Multiple {col} in variant filter"
 
-            # if keep_missing:
-            #     log_handle.write(f"Apply variant filter {prop} with negative selection (keep variants with missing values).\n")
-            #     barcodes_exclude = set(
-            #         var_filt_df.query(
-            #             f"{prop} < {thres}")['barcode']
-            #     )
-            #     log_handle.write(str(len(barcodes_exclude))+" of "+str(len(var_filt_df))+" variants have inadequate "+prop+"\n")
-            #     escape_scores[f"variant_pass_{prop}_filter"] = (
-            #         escape_scores['barcode'].map(lambda s: s not in barcodes_exclude)
-            #     )
-            # else:
-            #     log_handle.write(f"Apply variant filter {prop} with positive selection (exclude variants with missing values).\n")
-            #     barcodes_adequate = set(
-            #         var_filt_df.query(
-            #             f"{prop} >= {thres}")['barcode']
-            #     )
-            #     log_handle.write(str(len(barcodes_adequate))+" of "+str(len(var_filt_df))+" variants have adequate "+prop+"\n")
-            #     escape_scores[f"variant_pass_{prop}_filter"] = (
-            #         escape_scores['barcode'].map(lambda s: s in barcodes_adequate)
-            #     )
+            filt_files = variant_filters[prop]
+            var_filt_df_merge = []
+            for filt_file in filt_files:
+                if not os.path.exists(filt_file):
+                    log_handle.write(f"Missing file {filt_file}. Skip {prop} variant filter.\n")
+                    continue
+                var_filt_df = pd.read_csv(filt_file)
+                
+                required_cols = ['barcode', prop]
+                assert set(required_cols).issubset(var_filt_df.columns), f"Missing columns in {filt_file} for prop {prop}: {required_cols}"
+                
+                for col in ['library', 'target']:
+                    if col in var_filt_df.columns:
+                        assert var_filt_df[col].nunique() == 1, f"Multiple {col} in variant filter {prop} {filt_file}"
+
+                var_filt_df_merge.append(var_filt_df)
+            
+            var_filt_df = pd.concat(var_filt_df_merge, ignore_index=True).groupby('barcode').aggregate(prop=('prop', 'mean')).reset_index()
+
             log_handle.write(f"Apply variant filter {prop}. Keep missing? {keep_missing}\n")
             variant_pass_df = var_filt_df[['barcode', prop]].dropna().assign(
                 **{f'variant_pass_{prop}_filter': lambda x: x[prop] >= thres})
@@ -121,7 +109,6 @@ def filter_expr_bind(
     log_handle.write(f"{sum(escape_scores['pass_filters'])} of {len(escape_scores)} mutants pass all filters.\n")
     log_handle.write(f"End filtering: {time.ctime()}\n\n")
     return escape_scores
-
 
 def calc_epistatsis_model(
         variant_escape_scores: pd.DataFrame, 
@@ -264,7 +251,7 @@ _info = {
     'include_stop': snakemake.config["calc_escape_scores"]["include_stop"],
     'norm_lower': snakemake.config["calc_escape_scores"]["norm_lower"],
     'norm_upper': snakemake.config["calc_escape_scores"]["norm_upper"],
-    'normalize_to_WT': snakemake.config["calc_escape_scores"]["normalize_to_WT"],
+    # 'normalize_to_WT': snakemake.config["calc_escape_scores"]["normalize_to_WT"],
     'keep_missing': snakemake.config["calc_escape_scores"]["keep_missing"],
     'epistasis': snakemake.config["calc_escape_scores"]["epistasis"],
 }
@@ -308,20 +295,29 @@ df = df.assign(variant_class = lambda x: x['aa_substitutions'].map(lambda s: 'st
 
 WT_barcodes = df.query('n_aa_substitutions == 0')
 WT_enrichment = (WT_barcodes['sample_count'].sum()/ncounts_escape) / (WT_barcodes['ref_count'].sum()/ncounts_ref)
+
 df['escape_enrichment_log10_fold_change'] = np.log10(df['escape_score'] / WT_enrichment)
 log_handle.write(f"WT enrichment ratio: {WT_enrichment}\n")
+_info['WT_enrichment'] = WT_enrichment
 
-df.to_csv(output_dir / 'variant_effects.csv', index=False)
+# df.to_csv(output_dir / 'variant_effects.csv', index=False)
+
+assert df['escape_score'].max() > 0, "No escape score is greater than 0."
 
 # scaling
 mn = np.nanquantile(df['escape_score'], _info["norm_lower"])
 mx = np.nanquantile(df['escape_score'], _info["norm_upper"])
+
+assert mn < mx, f"Lower quantile {mn} is not less than upper quantile {mx}"
 
 # adjust error bound if max is 0
 _upper_adj = 0
 while mx == 0:
     _upper_adj += 1
     mx = np.nanquantile(df['escape_score'], 1.0 - (1.0-_info['norm_upper']) / 2**_upper_adj)
+
+_info['scaling_lower'] = mn
+_info['scaling_upper'] = mx
 
 log_handle.write(f"\nEnrichment ratio scaling - min: {mn}, max: {mx}, upper adjusted: {1.0 - (1.0-_info['norm_upper']) / 2**_upper_adj}\n")
 

@@ -16,9 +16,8 @@ with open(os.path.join(config['output'], "_tasks.yaml"), "r") as f:
 rule all:
     input:
         # os.path.join(config['output'], "barcode_count_stat.csv"),
-        # expand(os.path.join(config['output'], "escape_summary/{batch}/site_escape_{model}_{status}.pdf"), batch=BATCHES, model=['model', 'single'], status=['PASS', 'FAIL']),
-        # expand(os.path.join(config['output'], "escape_summary/{batch}/QCstat.pdf"), batch=BATCHES),
-        expand(os.path.join(config['output'], "escape_summary/{batch}/{file}"), batch=BATCHES, file=['stat.csv', 'site_escape_scores.csv'])
+        # expand(os.path.join(config['output'], "escape_summary/{batch}/site_escape_{model}_{status}.svg"), batch=BATCHES, model=['model', 'single'], status=['PASS', 'FAIL']),
+        expand(os.path.join(config['output'], "escape_summary/{batch}/QCstat.svg"), batch=BATCHES),
 
 # def get_log_func(rule, name):
 #     assert (name == 'out' or name == 'err')
@@ -118,8 +117,8 @@ rule escape_batch_summary:
     output:
         expand(os.path.join(config['output'], "escape_summary/{{batch}}/{file}"), file=['stat.csv', 'site_escape_scores.csv'])
     resources:
-        stdout = lambda wc: os.path.join(config["output"], f"logs/escape_batch/{wc.batch}/summary_stdout.txt"),
-        stderr = lambda wc: os.path.join(config["output"], f"logs/escape_batch/{wc.batch}/summary_stderr.txt")
+        stdout = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/summary_stdout.txt"),
+        stderr = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/summary_stderr.txt")
     script:
         "scripts/escape_batch_summary.py"
 
@@ -128,10 +127,10 @@ rule escape_batch_plot:
         os.path.join(config['output'], "escape_summary/{batch}/site_escape_scores.csv"),
         os.path.join(config['output'], "escape_summary/{batch}/stat.csv"),
     output:
-        expand(os.path.join(config['output'], "escape_summary/{{batch}}/site_escape_{model}_{status}.pdf"), model=['model', 'single'], status=['PASS', 'FAIL']),
-        expand(os.path.join(config['output'], "escape_summary/{{batch}}/QCstat.pdf"))
+        expand(os.path.join(config['output'], "escape_summary/{{batch}}/{status}/site_escape_{agg}_{model}.svg"), agg=['total', 'mean'], model=['model', 'single'], status=['pass', 'fail']),
+        expand(os.path.join(config['output'], "escape_summary/{{batch}}/QCstat.svg"))
     resources:
-        stdout = lambda wc: os.path.join(config["output"], f"logs/escape_batch/{wc.batch}/plot_stdout.txt"),
-        stderr = lambda wc: os.path.join(config["output"], f"logs/escape_batch/{wc.batch}/plot_stderr.txt")
+        stdout = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stdout.txt"),
+        stderr = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stderr.txt")
     script:
-        "scripts/escape_batch_plot.R"
+        "scripts/escape_batch_plot.py"

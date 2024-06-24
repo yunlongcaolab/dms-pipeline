@@ -89,7 +89,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config, 'r'))
     BATCHES = os.listdir(config['sample_info_bc'])
-    with open(os.path.join(config['output'], "logs", "sample_info_clean.log.txt"), 'w') as logobj:
+
+    log_file = os.path.join(config['output'], "logs", "sample_info_clean.log.txt")
+    if not os.path.exists(os.path.dirname(log_file)):
+        os.makedirs(os.path.dirname(log_file))
+
+    with open(log_file, 'w') as logobj:
         main(
             raw = config['raw_bc'], 
             sample_info = config['sample_info_bc'],
