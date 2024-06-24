@@ -21,12 +21,13 @@ calc_escape_scores:
   norm_upper: 0.995  # Normalizes escape scores to [0, 1] with quantile cutoffs. Eg. For lower=0.01 and upper=0.995, scores below 1% or above 99.5% quantiles are set to 0 and 1, respectively.
   flexible_upper: true  # Adjusts the upper quantile if not suitable (e.g., if the 99.5% quantile is not >10 times the 1% quantile), using the maximum score as the upper bound.
 
-  filter_on_single_mut: true
-  filter_on_variant: true
+  filter_on_single: true
+  filter_on_variant: false
+
   min_variant: # default values
-    delta_ML_meanF: -1.2
+    delta_ML_meanF: -1.0
   min_single: # default values
-    expr: -1.2
+    expr_avg: -1.0
   keep_missing: true # keep the escape scores for mutants with missing values in the variant/mut filters
   calc_no_filter: true # also output the results without any filters
   include_stop: false
@@ -39,11 +40,12 @@ libinfo:
     target: RSV-F
     wt_seq: reference/wt_seqs/RSV-F.fasta
     ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
-    single_filters: null
+    single_filters: 
+      expr_avg: reference/filters/expr_single_20240401_RSV-F-lib.csv
     variant_filters: 
       delta_ML_meanF: 
-        - reference/variant_expression_filters/RSV-F/expr_RSV-F-lib1_20240401.csv
-        - reference/variant_expression_filters/RSV-F/expr_RSV-F-lib2_20240401.csv
+        - reference/filters/RSV-F/expr_RSV-F-lib1_20240401.csv
+        - reference/filters/RSV-F/expr_RSV-F-lib2_20240401.csv
   RSV-F-Full-lib1:
     bclen: 26
     target: RSV-F-Full

@@ -10,18 +10,18 @@ def site_plot(data: pd.DataFrame, use_col: str) -> alt.Chart:
     sys.stdout.write(f"Plotting {use_col}...\n")
 
     base = alt.Chart(data).encode(
-            x=alt.X("site_number:N", title="Site"),
+            x=alt.X("site_number:Q", title="Site"),
             y=alt.X(use_col+":Q", title='site escape'),
             text="site:N",
-            tooltip=[
-                "site:N", 
-                alt.Tooltip(use_col+":Q", format=".3")],
+            # tooltip=[
+            #     "site:N", 
+            #     alt.Tooltip(use_col+":Q", format=".3")],
         ).properties(width=800, height=80)
 
     points = base.mark_circle(color='#66ccff', opacity=0.8)
     text = base.mark_text(align='center')
 
-    return (points + text).facet('sample:N', columns=1).resolve_scale(y='independent').resolve_axis(y='independent')
+    return (points + text).facet(alt.Facet('sample:N', header=None), columns=1).resolve_scale(y='independent').resolve_axis(y='independent')
 
 def stat_plots(stat: pd.DataFrame) -> alt.Chart:
     charts = alt.vconcat()
@@ -35,6 +35,14 @@ def stat_plots(stat: pd.DataFrame) -> alt.Chart:
     ).properties(width=200, height=200).facet('library:N', columns=3)
     charts &= pass_QC
 
+    # distribution of "ncounts_escape", grouped by "pass_QC"
+    ncounts = alt.Chart(stat).mark_bar().encode(
+        x=alt.X('ncounts_escape:Q', bin=alt.Bin(maxbins=20), title='# of valid reads in the sample'),
+        y='count()',
+        color='pass_QC:N'
+    ).properties(width=200, height=200).facet('library:N', columns=3)
+
+    charts &= ncounts
     return charts
 
 # SNAKEMAKE_SCRIPT_ENTRY

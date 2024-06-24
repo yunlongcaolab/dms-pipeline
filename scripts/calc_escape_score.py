@@ -12,6 +12,14 @@ from binarymap.binarymap import BinaryMap
 import collections, itertools
 from typing import Dict, Optional, TextIO, Literal
 
+def scaling(x, mn, mx):
+    if x < mn:
+        return 0
+    elif x > mx:
+        return 1
+    else:
+        return (x - mn) / (mx - mn)
+
 def filter_expr_bind(
         df: pd.DataFrame, 
         single_filters: Dict[str, Path], 
@@ -20,14 +28,14 @@ def filter_expr_bind(
         min_variant: Dict[str, float],
         keep_missing: bool, 
         filter_on_variant: bool, 
-        filter_on_single_mut: bool,
+        filter_on_single: bool,
         log_handle: Optional[TextIO] = sys.stdout) -> pd.DataFrame:
 
     log_handle.write(f"\nFiltering bad mutants... Start: {time.ctime()}\n")
     escape_scores = df.assign(pass_filters = True)
 
     # try to apply single mut filters
-    if filter_on_single_mut and single_filters is not None:
+    if filter_on_single and single_filters is not None:
         for prop, thres in min_single.items():
             if prop not in single_filters:
                 log_handle.write(f"Missing filter for {prop}. Skip {prop} single mut filter.\n")
@@ -92,7 +100,7 @@ def filter_expr_bind(
 
                 var_filt_df_merge.append(var_filt_df)
             
-            var_filt_df = pd.concat(var_filt_df_merge, ignore_index=True).groupby('barcode').aggregate(prop=('prop', 'mean')).reset_index()
+            var_filt_df = pd.concat(var_filt_df_merge, ignore_index=True).groupby('barcode')[prop].mean().reset_index() # merge multiple filters
 
             log_handle.write(f"Apply variant filter {prop}. Keep missing? {keep_missing}\n")
             variant_pass_df = var_filt_df[['barcode', prop]].dropna().assign(
@@ -114,6 +122,7 @@ def calc_epistatsis_model(
         variant_escape_scores: pd.DataFrame, 
         label_sites: Dict[int, str], 
         epistasis_model: str,
+        single_mut_scores: Dict[str, float],
         log_handle: Optional[TextIO] = sys.stdout, **kwargs) -> pd.DataFrame:
     log_handle.write(f'\nCalculate for epistasis ... Start: {time.ctime()}\n')
     binary_map = BinaryMap(variant_escape_scores, func_score_col='escape_score')
@@ -154,12 +163,7 @@ def calc_epistatsis_model(
                     (x['n_any_mut_measurements'] >= 3))
                 ).query('sufficient_measurements == True').drop(columns='sufficient_measurements')
 
-    raw_avg_single_mut_scores = df.query('n_aa_substitutions == 1').rename(
-        columns={'aa_substitutions': 'mutation'}).groupby(
-            'mutation').aggregate(
-                raw_single_mut_score=pd.NamedAgg('escape_score', 'mean')).reset_index()
-    
-    # normalize again
+    # scaling again
     def score_scaling(x, lower_quantile, upper_quantile):
         mn = max(0,np.nanquantile(x, lower_quantile))
         mx = min(1,np.nanquantile(x, upper_quantile))
@@ -167,15 +171,17 @@ def calc_epistatsis_model(
             mx = max(x)
             if mx < 10 * mn:
                 mx = 1
-        return [((i-mn)/(mx-mn) if (i >= mn and i <= mx) else (0 if (i < (mn+mx)/2) else 1)) for i in x]
+        return [scaling(i, mn, mx) for i in x]
 
-    effects_df = effects_df.merge(raw_avg_single_mut_scores, how='outer', validate='one_to_one').assign(
+    effects_df = effects_df.assign(
+        single_mut_escape = lambda x: x['mutation'].map(single_mut_scores),
         site=lambda x: x['mutation'].str[1: -1].astype(int),
-        wildtype=lambda x: x['mutation'].str[0],
-        mutation=lambda x: x['mutation'].str[-1],
-    ).assign(mut_escape=lambda x: score_scaling(x['epistasis_model_score'], 0.01, 0.996)).rename(
-        columns={'raw_single_mut_score': 'single_mut_escape'}
-    )
+        wildtype=lambda x: x['mutation'].str[0]).assign(mutation=lambda x: x['mutation'].str[-1]).assign(
+            epistasis_model_score_scaled=lambda x: score_scaling(x['epistasis_model_score'], 0.01, 0.996)).assign(
+                # use single if available, otherwise use model score
+                mut_escape=lambda x: x['single_mut_escape'].fillna(x['epistasis_model_score_scaled'])
+            )
+
     effects_df['site_number'] = effects_df['site']
     effects_df['site'] = [label_sites[i-1] for i in effects_df['site']]
 
@@ -246,7 +252,7 @@ _info = {
 
     'min_ref_count': snakemake.config["calc_escape_scores"]["min_ref_count"],
     'min_variant_support': snakemake.config["calc_escape_scores"]["min_variant_support"],
-    'filter_on_single_mut': snakemake.config["calc_escape_scores"]["filter_on_single_mut"],
+    'filter_on_single': snakemake.config["calc_escape_scores"]["filter_on_single"],
     'filter_on_variant': snakemake.config["calc_escape_scores"]["filter_on_variant"],
     'include_stop': snakemake.config["calc_escape_scores"]["include_stop"],
     'norm_lower': snakemake.config["calc_escape_scores"]["norm_lower"],
@@ -256,10 +262,15 @@ _info = {
     'epistasis': snakemake.config["calc_escape_scores"]["epistasis"],
 }
 
+_stat = {}
+
+for info_item in ['library', 'antibody', 'sample']:
+    _stat[info_item] = _info[info_item]
+
 for filter_type in ['single', 'variant']:
-    if snakemake.config["libinfo"][snakemake.params.library][f"{filter_type}_filters"] is not None:
-        for prop, file in snakemake.config["libinfo"][snakemake.params.library][f"{filter_type}_filters"].items():
-            _info[f'{filter_type}_{prop}_filter'] = os.path.abspath(file)
+    if _info[f'filter_on_{filter_type}'] and (snakemake.config["libinfo"][snakemake.params.library][f"{filter_type}_filters"] is not None):
+        for prop, files in snakemake.config["libinfo"][snakemake.params.library][f"{filter_type}_filters"].items():
+            _info[f'{filter_type}_{prop}_filter'] = [os.path.abspath(x) for x in files] if isinstance(files, list) else os.path.abspath(files)
             try:
                 _info[f'{filter_type}_{prop}_min'] = snakemake.config["libinfo"][snakemake.params.library][f"min_{filter_type}"][prop]
             except: # use default value
@@ -276,8 +287,12 @@ output_dir = config_output / f"escape_calc/{batch}/{sample}"
 log_handle = sys.stdout
 
 # calculate escape enrichment ratio
-ncounts_ref = ref_count['count'].sum()
-ncounts_escape = sample_count['count'].sum()
+ncounts_ref = ref_count['count'].sum().item()
+ncounts_escape = sample_count['count'].sum().item()
+
+_stat['ncounts_ref'] = ncounts_ref
+_stat['detected_barcodes'] = len(sample_count.query('count > 0'))
+_stat['ncounts_escape'] = ncounts_escape
 
 df = ref_count.merge(
     sample_count[['barcode','count']], on = 'barcode', how='left').rename(
@@ -293,12 +308,16 @@ df = pd.read_csv(table).drop(columns=['target','library','codon_substitutions','
 df['aa_substitutions'] = df['aa_substitutions'].fillna('')
 df = df.assign(variant_class = lambda x: x['aa_substitutions'].map(lambda s: 'stop' if '*' in s else 'missense' if len(s.split()) > 0 else 'synonymous'))
 
+_stat['detected_variants'] = len(df.query('sample_count > 0')['aa_substitutions'].unique())
+_stat['detected_single_mutants'] = len(df.query('sample_count > 0 and n_aa_substitutions == 1')['aa_substitutions'].unique())
+
 WT_barcodes = df.query('n_aa_substitutions == 0')
-WT_enrichment = (WT_barcodes['sample_count'].sum()/ncounts_escape) / (WT_barcodes['ref_count'].sum()/ncounts_ref)
+
+WT_enrichment = (WT_barcodes['sample_count'].sum().item()/ncounts_escape) / (WT_barcodes['ref_count'].sum().item()/ncounts_ref)
+_stat['WT_enrichment'] = WT_enrichment
 
 df['escape_enrichment_log10_fold_change'] = np.log10(df['escape_score'] / WT_enrichment)
 log_handle.write(f"WT enrichment ratio: {WT_enrichment}\n")
-_info['WT_enrichment'] = WT_enrichment
 
 # df.to_csv(output_dir / 'variant_effects.csv', index=False)
 
@@ -316,14 +335,14 @@ while mx == 0:
     _upper_adj += 1
     mx = np.nanquantile(df['escape_score'], 1.0 - (1.0-_info['norm_upper']) / 2**_upper_adj)
 
-_info['scaling_lower'] = mn
-_info['scaling_upper'] = mx
+_stat['scaling_lower'] = mn.item()
+_stat['scaling_upper'] = mx.item()
 
 log_handle.write(f"\nEnrichment ratio scaling - min: {mn}, max: {mx}, upper adjusted: {1.0 - (1.0-_info['norm_upper']) / 2**_upper_adj}\n")
 
 df = df.assign(raw_escape_score = df['escape_score'])
 
-df['escape_score'] = [(i if (i > mn and i < mx) else (0 if (i < (mn+mx)/2) else mx))/mx for i in df['raw_escape_score']]
+df['escape_score'] = df['raw_escape_score'].map(lambda x: scaling(x, mn, mx))
 
 df = filter_expr_bind(
     df = df, 
@@ -333,13 +352,20 @@ df = filter_expr_bind(
     min_variant = snakemake.config["calc_escape_scores"]["min_variant"],
     keep_missing = _info["keep_missing"],
     filter_on_variant = _info["filter_on_variant"],
-    filter_on_single_mut = _info["filter_on_single_mut"],
+    filter_on_single = _info["filter_on_single"],
     log_handle = log_handle
 )
 
 df.to_csv(output_dir / "variant_escape_scores.csv", index=False)
 
 df_filter = df.query('pass_filters == True')
+
+single_mut_scores = df.query('n_aa_substitutions == 1').groupby('aa_substitutions').aggregate(
+    total_sample_count = pd.NamedAgg('sample_count', 'sum'),
+    total_ref_count = pd.NamedAgg('ref_count', 'sum')
+).assign(
+    escape_score = lambda x: ((x['total_sample_count']/ncounts_escape) / (x['total_ref_count']/ncounts_ref)).map(lambda y: scaling(y, mn, mx))
+)['escape_score'].to_dict()
 
 if not snakemake.config["calc_escape_scores"]["include_stop"]:
     df_filter = df_filter.query('variant_class != "stop"')
@@ -379,9 +405,11 @@ else:
     log_handle.write(f'\nAlignment for numbering.\n')
     label_sites = generate_sequence_numbering(ref_numbering_seq, wt_seq, mode='global')
 
+
 effects_df, site_effects_df = calc_epistatsis_model(
     variant_escape_scores = df_filter,
     label_sites = label_sites, 
+    single_mut_scores = single_mut_scores,
     epistasis_model = _info['epistasis'],
     log_handle=log_handle
 )
@@ -390,12 +418,13 @@ effects_df.to_csv(output_dir / "single_mut_escape_scores.csv", index=False)
 site_effects_df.to_csv(output_dir / "site_escape_scores.csv", index=False)
 
 pass_QC = dms_quality_filter(effects_df, site_effects_df)
-_info['pass_QC'] = pass_QC
+_stat['pass_QC'] = pass_QC
 
-if (_info["filter_on_variant"] or _info["filter_on_single_mut"]) and snakemake.config["calc_escape_scores"]["calc_no_filter"]:
+if (_info["filter_on_variant"] or _info["filter_on_single"]) and snakemake.config["calc_escape_scores"]["calc_no_filter"]:
     effects_df, site_effects_df = calc_epistatsis_model(
         variant_escape_scores = df,
         label_sites = label_sites, 
+        single_mut_scores = single_mut_scores,
         epistasis_model = _info['epistasis'],
         log_handle=log_handle
     )
@@ -403,5 +432,6 @@ if (_info["filter_on_variant"] or _info["filter_on_single_mut"]) and snakemake.c
     site_effects_df.to_csv(output_dir /"site_escape_scores_no_filter.csv", index=False)
 
 yaml.dump(_info, open(output_dir / 'calc_escape_info.yaml', 'w'))
+yaml.dump(_stat, open(output_dir / 'calc_escape_stat.yaml', 'w'))
 
 log_handle.close()

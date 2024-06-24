@@ -15,13 +15,7 @@ with open(os.path.join(config['output'], "_tasks.yaml"), "r") as f:
 
 rule all:
     input:
-        # os.path.join(config['output'], "barcode_count_stat.csv"),
-        # expand(os.path.join(config['output'], "escape_summary/{batch}/site_escape_{model}_{status}.svg"), batch=BATCHES, model=['model', 'single'], status=['PASS', 'FAIL']),
-        expand(os.path.join(config['output'], "escape_summary/{batch}/QCstat.svg"), batch=BATCHES),
-
-# def get_log_func(rule, name):
-#     assert (name == 'out' or name == 'err')
-#     return lambda wc: os.path.join(config['output'], f'logs/{rule}/{"/".join([wc[i] for i in sorted(wc.keys())])}/std{name}.txt')
+        expand(os.path.join(config['output'], "escape_summary/{batch}/QCstat.pdf"), batch=BATCHES),
 
 rule barcode_count:
     input:
@@ -101,7 +95,8 @@ rule escape_calc:
         os.path.join(config['output'], "escape_calc/{batch}/{sample}/single_mut_escape_scores.csv"),
         os.path.join(config['output'], "escape_calc/{batch}/{sample}/site_escape_scores.csv"),
         os.path.join(config['output'], "escape_calc/{batch}/{sample}/variant_escape_scores.csv"),
-        os.path.join(config['output'], "escape_calc/{batch}/{sample}/calc_escape_info.yaml")
+        os.path.join(config['output'], "escape_calc/{batch}/{sample}/calc_escape_info.yaml"),
+        os.path.join(config['output'], "escape_calc/{batch}/{sample}/calc_escape_stat.yaml")
     resources:
         stdout = lambda wc: os.path.join(config['output'], f"logs/escape_calc/{wc.batch}/{wc.sample}/stdout.txt"),
         stderr = lambda wc: os.path.join(config['output'], f"logs/escape_calc/{wc.batch}/{wc.sample}/stderr.txt")
@@ -112,7 +107,7 @@ rule escape_batch_summary:
     input:
         lambda wildcards: [
             *[os.path.join(config['output'], "escape_calc", wildcards.batch, sample, "site_escape_scores.csv") for sample in TASKS['escape_calc'][wildcards.batch]],
-            *[os.path.join(config['output'], "escape_calc", wildcards.batch, sample, "calc_escape_info.yaml") for sample in TASKS['escape_calc'][wildcards.batch]],
+            *[os.path.join(config['output'], "escape_calc", wildcards.batch, sample, "calc_escape_stat.yaml") for sample in TASKS['escape_calc'][wildcards.batch]],
         ]
     output:
         expand(os.path.join(config['output'], "escape_summary/{{batch}}/{file}"), file=['stat.csv', 'site_escape_scores.csv'])
@@ -127,8 +122,8 @@ rule escape_batch_plot:
         os.path.join(config['output'], "escape_summary/{batch}/site_escape_scores.csv"),
         os.path.join(config['output'], "escape_summary/{batch}/stat.csv"),
     output:
-        expand(os.path.join(config['output'], "escape_summary/{{batch}}/{status}/site_escape_{agg}_{model}.svg"), agg=['total', 'mean'], model=['model', 'single'], status=['pass', 'fail']),
-        expand(os.path.join(config['output'], "escape_summary/{{batch}}/QCstat.svg"))
+        expand(os.path.join(config['output'], "escape_summary/{{batch}}/{status}/site_escape_{agg}_{model}.pdf"), agg=['total', 'mean'], model=['model', 'single'], status=['pass', 'fail']),
+        expand(os.path.join(config['output'], "escape_summary/{{batch}}/QCstat.pdf"))
     resources:
         stdout = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stdout.txt"),
         stderr = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stderr.txt")
