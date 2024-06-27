@@ -46,7 +46,7 @@ def filter_expr_bind(
 
             single_mut_filt = pd.read_csv(single_filters[prop])
 
-            required_cols = ['mut_start', prop+'_avg']
+            required_cols = ['mut_start', prop]
             assert set(required_cols).issubset(single_mut_filt.columns), f"Missing columns in {single_filters[prop]}: {required_cols}"
 
             assert single_mut_filt['mut_start'].nunique() == len(single_mut_filt) # check to make sure each mutation is unique
@@ -55,7 +55,7 @@ def filter_expr_bind(
                 log_handle.write("Apply mut_bind_expr filter with negative selection (keep mutants with missing values).\n")
                 muts_exclude = set(
                     single_mut_filt.query(
-                        f"{prop}_avg < {thres}")['mut_start']
+                        f"{prop} < {thres}")['mut_start']
                 )
                 log_handle.write(str(len(muts_exclude))+" of "+str(len(single_mut_filt))+" mutations have inadequate "+prop+"\n")
                 escape_scores[f"muts_pass_{prop}_filter"] = (
@@ -65,7 +65,7 @@ def filter_expr_bind(
                 log_handle.write("Apply mut_bind_expr filter with positive selection (exclude mutants with missing values).\n")
                 muts_adequate = set(
                     single_mut_filt.query(
-                        f"{prop}_avg >= {min_single['prop']}")['mut_start']
+                        f"{prop} >= {min_single['prop']}")['mut_start']
                 )
                 log_handle.write(str(len(muts_adequate))+" of "+str(len(single_mut_filt))+" mutations have adequate "+prop+"\n")
                 escape_scores[f"muts_pass_{prop}_filter"] = (
@@ -152,7 +152,7 @@ def calc_epistatsis_model(
     effects_df = pd.DataFrame({'mutation': model.binarymap.all_subs}).assign(
         n_single_mut_measurements=lambda x: x['mutation'].map(variant_counter),
         n_any_mut_measurements=lambda x: x['mutation'].map(muts_counter),
-    ).pipe(model.add_phenotypes_to_df, 
+    ).pipe(model.add_phenotypes_to_df,  
            substitutions_col='mutation').drop(columns='latent_phenotype').rename(
                columns={'observed_phenotype': 'epistasis_model_score'})
     
