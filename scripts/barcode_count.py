@@ -36,7 +36,7 @@ parser.add_argument('--min_dist_diff', type=int, help="Min required difference i
 def count_variants(variants, lib, fastq_data, bclen, max_dist, min_dist_diff, allowed_lowq, lowq=20):
     valid_barcodes = list(pd.unique(variants.query('library == @lib')['barcode']))
     
-    sys.stdout.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f' | N barcodes: {len(valid_barcodes)}\n')
+    sys.stdout.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f' | Number of barcodes in the dictionary: {len(valid_barcodes)}\n')
     sys.stdout.flush()
     
     if max_dist >= 1:

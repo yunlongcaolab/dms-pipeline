@@ -33,7 +33,10 @@ calc_escape_scores:
   include_stop: false
 
   epistasis: dms_variants # dms_variants | dms_variants_linear | sigmoid
-
+  
+  QC: # threshold for escape profile quality filters
+    max_WT_enrichment: 0.3
+  
 libinfo:
   RSV-F-UP-merged:
     bclen: 26

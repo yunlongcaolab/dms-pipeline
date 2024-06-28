@@ -26,13 +26,14 @@ def site_plot(data: pd.DataFrame, use_col: str) -> alt.Chart:
 def stat_plots(stat: pd.DataFrame) -> alt.Chart:
     charts = alt.vconcat()
     # donut chart for column "pass_QC"
-    pass_QC = alt.Chart(stat).mark_arc().encode(
-        theta='count()',
-        color='pass_QC:N'
-    ).transform_aggregate(
+    pass_QC = alt.Chart(stat).transform_aggregate(
         count='count()',
         groupby=['pass_QC']
+    ).mark_arc(innerRadius=50).encode(
+        theta='count:Q',
+        color='pass_QC:N',
     ).properties(width=200, height=200).facet('library:N', columns=3)
+    
     charts &= pass_QC
 
     # distribution of "ncounts_escape", grouped by "pass_QC"
@@ -43,6 +44,14 @@ def stat_plots(stat: pd.DataFrame) -> alt.Chart:
     ).properties(width=200, height=200).facet('library:N', columns=3)
 
     charts &= ncounts
+
+    WT_enrich_dist = alt.Chart(stat).mark_bar().encode(
+        x=alt.X('WT_enrichment:Q', bin=alt.Bin(maxbins=40), title='WT enrichment'),
+        y='count()',
+        color='pass_QC:N'
+    ).properties(width=200, height=200).facet('library:N', columns=3)
+
+    charts &= WT_enrich_dist
     return charts
 
 # SNAKEMAKE_SCRIPT_ENTRY

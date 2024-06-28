@@ -229,8 +229,27 @@ def generate_sequence_numbering(
             label_sites[aln.indices[1, i]] = str(cur+1)
     return label_sites
 
-def dms_quality_filter(single_mut_scores: pd.DataFrame, site_scores: pd.DataFrame):
-    # TODO: implement quality filter
+def dms_quality_filter(stat_dict, QC_thres: Dict[str, float], log_handle: Optional[TextIO] = sys.stdout) -> bool:
+    log_handle.write(f"\nStart QC ...\n")
+    for prop in QC_thres:
+        if prop.startswith('min_'):
+            prop_name = prop[4:]
+            if prop_name in stat_dict:
+                if stat_dict[prop_name] < QC_thres[prop]:
+                    return False
+            else:
+                log_handle.write(f"Missing property {prop_name} in stat_dict for QC target {prop}. Skip.\n")
+
+        elif prop.startswith('max_'):
+            prop_name = prop[4:]
+            if prop_name in stat_dict:
+                if stat_dict[prop_name] > QC_thres[prop]:
+                    return False
+            else:
+                log_handle.write(f"Missing property {prop_name} in stat_dict for QC target {prop}. Skip.\n")
+        else:
+            raise ValueError(f"QC target {prop} must start with 'min_' or 'max_'.")
+
     return True
 
 # SCRIPT ENTRY
@@ -417,8 +436,11 @@ effects_df, site_effects_df = calc_epistatsis_model(
 effects_df.to_csv(output_dir / "single_mut_escape_scores.csv", index=False)
 site_effects_df.to_csv(output_dir / "site_escape_scores.csv", index=False)
 
-pass_QC = dms_quality_filter(effects_df, site_effects_df)
-_stat['pass_QC'] = pass_QC
+if "QC" in snakemake.config["calc_escape_scores"]:
+    _stat["pass_QC"] = dms_quality_filter(_stat, snakemake.config["calc_escape_scores"]["QC"], log_handle=log_handle)
+else:
+    log_handle.write("\nNo QC threshold is set. Skip QC.\n")
+    _stat['pass_QC'] = True
 
 if (_info["filter_on_variant"] or _info["filter_on_single"]) and snakemake.config["calc_escape_scores"]["calc_no_filter"]:
     effects_df, site_effects_df = calc_epistatsis_model(
