@@ -75,7 +75,7 @@ See the example `config.yaml`. You should replace the items in it with your cust
 
 PacBio sequencing data to construct a barcode-variant lookup table.
 
-**(TO COMPLETE)**
+**(TO COMPLETE)** 
 
 ### Analyzing barcode NGS data
 

@@ -7,6 +7,8 @@ output: output_example
 
 batches: all # specify the batch names to process, or 'all' to process all batches
 
+fq_suffix: '*q.gz'
+
 barcode_count:
   lowq: 20  # Minimum sequencing quality required.
   allowed_lowq: 1  # Permits one low-quality nucleotide per read. Recommended for barcodes >25 in length.

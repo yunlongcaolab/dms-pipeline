@@ -1,12 +1,21 @@
 import pandas as pd
-import glob, os, sys
+import glob, os
 import yaml
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", help="config file")
 
-def main(raw, sample_info, batches, output, logobj, exclude_antibody_names=[]):
+def main(config, batches, logobj):
+    raw = config['raw_bc']
+    sample_info = config['sample_info_bc']
+    output = config['output']
+    exclude_antibody_names=config['exclude_antibody_names']
+
+    suffix = config['fq_suffix'] if 'fq_suffix' in config else "*q.gz"
+
+    logobj.write(f"Raw: {raw}\nsample_info: {sample_info}\noutput: {output}\nfastq suffix: {suffix}\n")
+
     all_df = []
     all_tasks = {
         "barcode_count": {},
@@ -22,7 +31,7 @@ def main(raw, sample_info, batches, output, logobj, exclude_antibody_names=[]):
         if 'fastq_files' not in _df.columns: # try to find fq files
             all_fq_files = []
             for sample in _df['sample']:
-                fq_files = glob.glob(os.path.join(raw, '**',f'*{sample}*q.gz'), recursive=True)
+                fq_files = glob.glob(os.path.join(raw, '**', f'*{sample}'+suffix), recursive=True)
                 if (len(fq_files) == 0):
                     logobj.write(f"Warning: {batch} - {sample}. FASTQ not found. Skipped. \n")
                     all_fq_files.append('')
@@ -96,10 +105,7 @@ if __name__ == "__main__":
 
     with open(log_file, 'w') as logobj:
         main(
-            raw = config['raw_bc'], 
-            sample_info = config['sample_info_bc'],
+            config=config,
             batches = BATCHES,
-            output=config['output'], 
-            logobj=logobj,
-            exclude_antibody_names=config['exclude_antibody_names']
+            logobj=logobj
         )
