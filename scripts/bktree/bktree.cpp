@@ -122,7 +122,7 @@ class BKTree {
                 secNode = cur;
             }
             for (int i = 0; i < cur->n_child; i++) {
-                if (cur->has_child[i] >= _dist - _sec_dist && cur->has_child[i] <= _dist + _sec_dist) {
+                if (cur->has_child[i] > _dist - _sec_dist && cur->has_child[i] < _dist + _sec_dist) {
                     q.push(cur->child[cur->has_child[i]]);
                     cnt += 1;
                 }
@@ -151,7 +151,7 @@ class BKTree {
                 minNode = cur;
             }
             for (int i = 0; i < cur->n_child; i++) {
-                if (cur->has_child[i] >= _dist - _min_dist && cur->has_child[i] <= _dist + _min_dist) {
+                if (cur->has_child[i] > _dist - _min_dist && cur->has_child[i] < _dist + _min_dist) {
                     q.push(cur->child[cur->has_child[i]]);
                 }
             }
