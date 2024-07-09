@@ -2,6 +2,7 @@ raw_bc: rawdata_example/barcode_sequencing
 raw_lib: rawdata_example/library_sequencing
 sample_info_bc: rawdata_example/sample_info_bc
 sample_info_lib: rawdata_example/sample_info_lib
+pipeline: /lustre/grp/cyllab/jianfc/Antibody/develop/dms-pipeline
 
 output: output_example
 
@@ -56,7 +57,7 @@ libinfo:
     target: RSV-F-Full
     wt_seq: reference/wt_seqs/RSV-F-Full.fasta
     ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
-    single_filters: null
+    single_filters: {}
     variant_filters: {}
 
 exclude_antibody_names: # The following antibody names will be ignored while calculating the escape scores

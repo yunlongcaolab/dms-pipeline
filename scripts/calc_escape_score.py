@@ -321,7 +321,11 @@ df = ref_count.merge(
 min_ref_count = _info['min_ref_count']
 min_variant_support = _info['min_variant_support']
 
-df = pd.read_csv(table).drop(columns=['target','library','codon_substitutions','n_codon_substitutions']).merge(df, on = 'barcode', how = 'inner').query(
+codon_table = pd.read_csv(table)
+if 'library' in codon_table.columns:
+    codon_table = codon_table.query('library == @snakemake.params.library')
+
+df = codon_table[['barcode', 'aa_substitutions', 'n_aa_substitutions', 'variant_call_support']].merge(df, on = 'barcode', how = 'inner').query(
         'ref_count > @min_ref_count and escape_score >= 0 and variant_call_support >= @min_variant_support'
     )
 df['aa_substitutions'] = df['aa_substitutions'].fillna('')

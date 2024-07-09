@@ -2,7 +2,7 @@ import os, glob
 import pandas as pd
 import yaml
 
-configfile: "config.yaml"
+configfile: "config-test.yaml"
 
 with open(os.path.join(config['output'], "_tasks.yaml"), "r") as f:
     TASKS = yaml.safe_load(f)
@@ -35,7 +35,7 @@ rule barcode_count:
     wildcard_constraints:
         sample='|'.join(TASKS["barcode_count"].keys())
     shell:
-        f'''python scripts/barcode_count.py --sample={{wildcards.sample}} --batch={{params.batch}} --library={{params.library}} \
+        f'''python {config['pipeline']}/scripts/barcode_count.py --sample={{wildcards.sample}} --batch={{params.batch}} --library={{params.library}} \
                                        -i {{params.fastq_files}} \
                                        -o {os.path.join(config['output'], 'barcode_count/{wildcards.sample}')} \
                                        -b {{params.bclen}} \
@@ -63,7 +63,7 @@ rule ref_merge:
     wildcard_constraints:
         target_ref='|'.join(TASKS["ref_merge"].keys())
     script: 
-        "scripts/ref_merge.py"
+        f"{config['pipeline']}/scripts/ref_merge.py"
 
 rule barcode_count_stat:
     input:
@@ -76,7 +76,7 @@ rule barcode_count_stat:
         stdout = os.path.join(config["output"], "logs/barcode_count_stat/stdout.txt"),
         stderr = os.path.join(config["output"], "logs/barcode_count_stat/stderr.txt")
     script:
-        "scripts/barcode_count_stat.py"
+        f"{config['pipeline']}/scripts/barcode_count_stat.py"
 
 rule escape_calc:
     input:
@@ -101,7 +101,7 @@ rule escape_calc:
         stdout = lambda wc: os.path.join(config['output'], f"logs/escape_calc/{wc.batch}/{wc.sample}/stdout.txt"),
         stderr = lambda wc: os.path.join(config['output'], f"logs/escape_calc/{wc.batch}/{wc.sample}/stderr.txt")
     script:
-        "scripts/calc_escape_score.py"
+        f"{config['pipeline']}/scripts/calc_escape_score.py"
 
 rule escape_batch_summary:
     input:
@@ -115,7 +115,7 @@ rule escape_batch_summary:
         stdout = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/summary_stdout.txt"),
         stderr = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/summary_stderr.txt")
     script:
-        "scripts/escape_batch_summary.py"
+        f"{config['pipeline']}/scripts/escape_batch_summary.py"
 
 rule escape_batch_plot:
     input:
@@ -129,4 +129,4 @@ rule escape_batch_plot:
         stdout = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stdout.txt"),
         stderr = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stderr.txt")
     script:
-        "scripts/escape_batch_plot.py"
+        f"{config['pipeline']}/scripts/escape_batch_plot.py"

@@ -1,10 +1,11 @@
 import pandas as pd
-import glob, os
+import glob, os, re
 import yaml
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", help="config file")
+parser.add_argument("--workdir", help="working directory", default=".")
 
 def main(config, batches, logobj):
     raw = config['raw_bc']
@@ -13,6 +14,7 @@ def main(config, batches, logobj):
     exclude_antibody_names=config['exclude_antibody_names']
 
     suffix = config['fq_suffix'] if 'fq_suffix' in config else "*q.gz"
+    R2_pattern = re.compile(r'((_2)|(_R2))\.f(ast)?q\.gz')
 
     logobj.write(f"Raw: {raw}\nsample_info: {sample_info}\noutput: {output}\nfastq suffix: {suffix}\n")
 
@@ -33,13 +35,19 @@ def main(config, batches, logobj):
             for sample in _df['sample']:
                 fq_files = glob.glob(os.path.join(raw, '**', f'*{sample}'+suffix), recursive=True)
                 if (len(fq_files) == 0):
-                    logobj.write(f"Warning: {batch} - {sample}. FASTQ not found. Skipped. \n")
+                    logobj.write(f"Warning: {batch} - {sample}. FASTQ not found. Try alternative path. \n")
+                    fq_files = glob.glob(os.path.join(raw, '**', f'*{sample}*', suffix if suffix[0] == '*' else '*'+suffix), recursive=True)
+                if (len(fq_files) == 0):
+                    logobj.write(f"Warning: {batch} - {sample}. FASTQ not found in alternative path. Skipped. \n")
                     all_fq_files.append('')
                 elif ',' in ''.join(fq_files):
                     logobj.write(f"Error: {batch} - {sample}. Comma in fastq file path.\n")
                     raise RuntimeError(f"Comma in fastq file path: {batch} - {sample}")
                 elif (len(fq_files) > 1):
-                    logobj.write(f"Warning: {batch} - {sample}. Multiple FASTQ found. {','.join(fq_files)}\n")
+                    logobj.write(f"Warning: {batch} - {sample}. Multiple FASTQ found. {','.join(fq_files)}. Try removing R2 files.\n")
+                    fq_files = [x for x in fq_files if not R2_pattern.search(x)]
+
+                    logobj.write(f"    {len(fq_files)} files found after removing. {','.join(fq_files)}.\n")
                     all_fq_files.append(','.join(fq_files))
                 else:
                     all_fq_files.append(fq_files[0])
@@ -97,6 +105,9 @@ def main(config, batches, logobj):
 if __name__ == "__main__":
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config, 'r'))
+
+    os.chdir(args.workdir)
+
     BATCHES = os.listdir(config['sample_info_bc'])
 
     log_file = os.path.join(config['output'], "logs", "sample_info_clean.log.txt")

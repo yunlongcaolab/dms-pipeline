@@ -3,13 +3,18 @@
 #SBATCH --mem=1g
 #SBATCH --partition=cpu1,cpu2,sugon,hygon
 
-config=config.yaml
-python scripts/sample_info_clean.py --config=$config
+# check config file exists
+if [ ! -f $1 ]; then
+    echo "Snakefile not found!"
+    exit 1
+fi
 
-# if scaat is available, use the following command (recommended by snakemake v8+). All slurm logs will be in .snakemake/slurm_logs
-# snakemake --executor slurm -j unlimited --default-resources cpu_per_tasks=1 mem_mb=2048 time=1440 slurm_partition=cpu1,cpu2,hygon,sugon --configfile $config
+snakefile=$1
+workdir=$(dirname $snakefile)
+config=$workdir/config.yaml
 
-# if scaat is banned, use generic executor. custom log files are used.
-slurm_cmd="sbatch --partition=cpu1,cpu2,sugon,hygon -c {resources.cpu_per_task} --mem={resources.mem_mb} -J {rule}_{wildcards} --time=1440 -o {resources.stdout} -e {resources.stderr}" 
-snakemake --configfile $config --executor cluster-generic --cluster-generic-submit-cmd "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048 # for snakemake v8+
-# snakemake --configfile $config --cluster "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048 # for snakemake v7
+python scripts/sample_info_clean.py --config=$config --workdir=$workdir
+
+slurm_cmd="sbatch --partition=cpu1,cpu2,sugon,hygon -c {resources.cpu_per_task} --mem={resources.mem_mb} -J {rule}_{wildcards} --time=1440 -D $workdir -o {resources.stdout} -e {resources.stderr}" 
+snakemake --snakefile $snakefile --directory $workdir --executor cluster-generic --cluster-generic-submit-cmd "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048 # for snakemake v8+
+# snakemake --snakefile $snakefile --directory $workdir --cluster "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048 # for snakemake v7

@@ -40,8 +40,8 @@ def count_variants(variants, lib, fastq_data, bclen, max_dist, min_dist_diff, al
     sys.stdout.flush()
     
     if max_dist >= 1:
-        from bktree import BKTree
-        bktree = BKTree(bclen)
+        from bktree import PBKTree
+        bktree = PBKTree(4,4,bclen)
         for bc in valid_barcodes:
             bktree.insert(bc)
         sys.stdout.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+' | BK-Tree constructed.\n')
