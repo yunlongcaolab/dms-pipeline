@@ -2,8 +2,6 @@ import os, glob
 import pandas as pd
 import yaml
 
-configfile: "config-test.yaml"
-
 with open(os.path.join(config['output'], "_tasks.yaml"), "r") as f:
     TASKS = yaml.safe_load(f)
     if config['batches'] != 'all':

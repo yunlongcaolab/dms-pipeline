@@ -9,6 +9,7 @@ output: output_example
 batches: all # specify the batch names to process, or 'all' to process all batches
 
 fq_suffix: '*q.gz'
+R2_pattern: '((_2)|(_R2))\.f(ast)?q\.gz'
 
 barcode_count:
   lowq: 20  # Minimum sequencing quality required.
@@ -66,3 +67,8 @@ exclude_antibody_names: # The following antibody names will be ignored while cal
   - ''
   - 'empty'
   - 'Empty'
+
+sample_name_replace:
+  - '/': '-'
+  - ' ': '-'
+  - '.': '-'
