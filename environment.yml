@@ -9,6 +9,8 @@ dependencies:
  - pyyaml
  - scipy
  - altair-all
+ - minimap2
+ - samtools
  - snakemake
  - snakemake-executor-plugin-slurm # if you need to run on slurm
  - snakemake-executor-plugin-cluster-generic # if you need to run on a generic cluster, or your slurm sacct is not available

@@ -4,6 +4,7 @@ set -e
 
 partitions=cpu1,cpu2,sugon,hygon
 workdir=/lustre/grp/cyllab/share/DMS/$1
+rule=$2
 
 timestamp=$(date +%Y%m%d%H%M%S)
 
@@ -54,7 +55,7 @@ cat << EOF > $slurm_script
 
 python $(pwd)/scripts/sample_info_clean.py --config=$config --workdir=$workdir
 
-snakemake --snakefile $snakefile --configfile $config --executor cluster-generic --cluster-generic-submit-cmd "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048
+snakemake $rule --snakefile $snakefile --configfile $config --executor cluster-generic --cluster-generic-submit-cmd "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048
 EOF
 
 sbatch $slurm_script

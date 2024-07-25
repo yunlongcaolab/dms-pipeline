@@ -1,0 +1,4 @@
+sample,library,antibody,is_ref,description,AbConc
+sample3,RSV-F-UP-merged,ab1,N,mutation escape profile,1
+sample4,RSV-F-UP-merged,ab2,N,mutation escape profile,1
+sampleref,RSV-F-UP-merged,ref,Y,mutation escape profile,0

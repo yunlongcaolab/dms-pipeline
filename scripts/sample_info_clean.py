@@ -127,20 +127,27 @@ def main(config, batches, logobj):
                     }
                 )
     yaml.dump(all_tasks, open(output /"_tasks.yaml", 'w'))
-    pd.concat(all_df).to_csv(output / 'sample_info_all.csv', index=None)
+    
+    if len(all_df) > 0:
+        pd.concat(all_df).to_csv(output / 'sample_info_all.csv', index=None)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config, 'r'))
 
     os.chdir(args.workdir)
-
-    BATCHES = os.listdir(config['sample_info_bc'])
+    
 
     log_file = Path(config['output'])/"logs"/"sample_info_clean.log.txt"
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
     with open(log_file, 'w') as logobj:
+        try:
+            BATCHES = os.listdir(config['sample_info_bc'])
+        except FileNotFoundError:
+            logobj.write(f"{config['sample_info_bc']} not found.\n")
+            BATCHES = []
+        
         logobj.write(f"Start: {time.ctime()}\n")
         main(
             config=config,
