@@ -5,6 +5,7 @@ import alignparse
 from alignparse.ccs import Summaries
 from alignparse.targets import Targets
 from alignparse.constants import CBPALETTE
+import alignparse.consensus
 from plotnine import theme, element_blank, ggplot, facet_wrap, geom_point, scale_y_log10, scale_x_log10, geom_text, position_dodge, facet_grid, scale_x_continuous
 from plotnine import aes, scale_fill_manual, element_text, geom_bar, geom_histogram, geom_vline, ylab, xlab, scale_color_manual,scale_y_continuous
 from plotnine.ggplot import save_as_pdf_pages
@@ -82,14 +83,14 @@ readstats = (
     )
 aligned_df.to_csv(processed_ccs, index=False)
 filtered_df.to_csv(output_dir / 'filtered_ccs.csv.gz', index=False)
-readstats.to_csv(output_dir / 'readstats.csv.gz', index=False)
+readstats.to_csv(output_dir / 'readstats.csv', index=False)
 
 #################
 ##### plots #####
 
 ncol = 7
 
-print(readstats)
+# print(readstats)
 
 p = (
     ggplot(readstats
@@ -308,7 +309,7 @@ for desc, query_str in [
         ]:
     # get just CCSs in that category
     df = processed_ccs.query(query_str)
-    
+
     # compute empirical accuracy
     empirical_acc.append(
         alignparse.consensus.empirical_accuracy(df,

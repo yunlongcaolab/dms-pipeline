@@ -1,10 +1,10 @@
 raw_bc: rawdata_example/barcode_sequencing
 raw_lib: rawdata_example/library_sequencing
 sample_info_bc: rawdata_example/sample_info_bc
-# sample_info_lib: rawdata_example/sample_info_lib
 pipeline: /lustre/grp/cyllab/jianfc/Antibody/develop/dms-pipeline
 
 target_ref: reference/target_ref
+wt_seqs: reference/wt_seqs
 
 output: output_example
 
@@ -47,8 +47,6 @@ libinfo:
   RSV-F-UP-merged:
     bclen: 26
     target: RSV-F
-    wt_seq: reference/wt_seqs/RSV-F.fasta
-    ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
     single_filters: 
       expr_avg: reference/filters/RSV-F/expr_single_20240401_RSV-F-lib.csv
     variant_filters: 
@@ -58,8 +56,6 @@ libinfo:
   RSV-F-lib1:
     bclen: 26
     target: RSV-F
-    wt_seq: reference/wt_seqs/RSV-F.fasta
-    ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
     single_filters: 
       expr_avg: reference/filters/RSV-F/expr_single_20240401_RSV-F-lib.csv
     variant_filters: 
@@ -68,8 +64,6 @@ libinfo:
   RSV-F-lib2:
     bclen: 26
     target: RSV-F
-    wt_seq: reference/wt_seqs/RSV-F.fasta
-    ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
     single_filters: 
       expr_avg: reference/filters/RSV-F/expr_single_20240401_RSV-F-lib.csv
     variant_filters: 
@@ -79,12 +73,11 @@ libinfo:
     bclen: 26
     target: RSV-F-Full
     wt_seq: reference/wt_seqs/RSV-F-Full.fasta
-    ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
     single_filters: {}
     variant_filters: {}
 
 ccs_align:
-  cpu_per_task: 4
+  cpu_per_task: 8
 
 library_merge: # define merged libraries
   RSV-F:
@@ -134,3 +127,7 @@ parse_specs:
         mutation_op_count: null
 
 default_template: reference/target_ref/default_template.txt
+
+default_libinfo:
+  ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
+  bclen: 26

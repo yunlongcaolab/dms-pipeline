@@ -6,20 +6,15 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from pathlib import Path
 import re, yaml
 
-target_dir = Path(snakemake.input[0]).parent
-target = Path(snakemake.input[0]).parent.name
-plasmid = open(snakemake.input[0], 'r').read().strip().upper()
+target_dir = Path(snakemake.input.plasmid).parent
+target = Path(snakemake.input.plasmid).parent.name
+plasmid = open(snakemake.input.plasmid, 'r').read().strip().upper()
 
 specs = snakemake.config['parse_specs']['default']
 if target in snakemake.config['parse_specs']:
     specs.update(snakemake.config['parse_specs'][target])
 
-if (target_dir / 'template.txt').exists():
-    print(f"Using custom template for {target}")
-    template = re.compile(open(target_dir / 'template.txt', 'r').read().strip().upper())
-else:
-    print(f"Using default template for {target}")
-    template = re.compile(open(snakemake.config['default_template'], 'r').read().strip().upper())
+template = re.compile(open(snakemake.input.template, 'r').read().strip().upper())
 
 search = template.search(plasmid) # 5 groups, corresponding to "termini5", "gene", "spacer", "barcode", "termini3"
 
@@ -30,8 +25,13 @@ termini5, gene, spacer, barcode, termini3 = search.groups()
 
 ref_seq = Seq(termini5 + gene + spacer + 'N'*len(barcode) + termini3)
 
-with open(target_dir / f'{target}.fasta', 'w') as f:
+with open(snakemake.output.minimap_ref, 'w') as f:
     f.write(f'>{target}\n{ref_seq}\n')
+
+Path(snakemake.output.wt_seq).parent.mkdir(parents=True, exist_ok=True)
+
+with open(snakemake.output.wt_seq, 'w') as f:
+    f.write(f'>{target}\n{gene}\n')
 
 gb = SeqRecord(ref_seq, id=target, name=target, description=f'{target} yeast display library reference.')
 
@@ -47,8 +47,8 @@ gb.features = [
     SeqFeature(FeatureLocation(search.end(4)-st, len(ref_seq), strand=1), type='termini3', qualifiers={'locus_tag': 'termini3', 'label': 'termini3'})
 ]
 
-with open(target_dir / f'pacbio_amplicons.gb', 'w') as f:
+with open(snakemake.output.gb, 'w') as f:
     SeqIO.write(gb, f, 'genbank')
 
-with open(target_dir / f'parse_specs.yaml', 'w') as f:
+with open(snakemake.output.specs, 'w') as f:
     yaml.dump({target: specs}, f)

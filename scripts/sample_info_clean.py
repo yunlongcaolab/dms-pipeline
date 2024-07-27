@@ -1,5 +1,5 @@
 import pandas as pd
-import glob, os, re
+import sys, os, re
 import yaml
 import argparse
 import time
@@ -21,7 +21,8 @@ def main(config, batches, logobj):
     suffix = config['fq_suffix'] if 'fq_suffix' in config else "*q.gz"
     R2_pattern = re.compile(r'((_2)|(_R2))\.f(ast)?q\.gz' if 'R2_pattern' not in config else config['R2_pattern'])
 
-    logobj.write(f"Raw: {raw}\nsample_info: {sample_info}\noutput: {output}\nfastq suffix: {suffix}\n")
+    logobj.write(f"Libraries: {','.join(libraries)}\n")
+    logobj.write(f"fastq suffix: {suffix}\n")
     logobj.flush()
 
     all_df = []
@@ -44,6 +45,12 @@ def main(config, batches, logobj):
     for batch in batches:
         csvfile = sample_info / batch / 'sample_info.csv'
         _df = pd.read_csv(csvfile).query('library in @libraries').assign(batch=batch).fillna('')
+
+        print(f'Processing {batch}... Number of samples: {len(_df)}')
+
+        if len(_df) == 0:
+            sys.stderr.write(f"Warning: {batch} - {csvfile}. No samples found.\n")
+            continue
 
         if not necessary_columns.issubset(_df.columns):
             logobj.write(f"Error: {batch} - {csvfile}. Missing necessary columns: {','.join(necessary_columns)}.\n")
@@ -149,6 +156,12 @@ if __name__ == "__main__":
             BATCHES = []
         
         logobj.write(f"Start: {time.ctime()}\n")
+        logobj.write(f"Sample Info Directory: {config['sample_info_bc']}\n")
+        logobj.write(f"Raw Barcode Directory: {config['raw_bc']}\n")
+        logobj.write(f"Output Directory: {config['output']}\n")
+
+        logobj.write(f"Batches: {BATCHES}\n")
+
         main(
             config=config,
             batches = BATCHES,

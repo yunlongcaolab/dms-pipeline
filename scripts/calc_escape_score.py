@@ -259,8 +259,7 @@ _info = {
     'library': snakemake.params.library,
     'antibody': snakemake.params.antibody,
     'ref': snakemake.params.ref,
-    'wt_seq': os.path.abspath(
-        snakemake.config['libinfo'][snakemake.params.library]['wt_seq']),
+    'wt_seq': snakemake.params.wt_seq,
     'ref_numbering_seq': os.path.abspath(
         snakemake.config['libinfo'][snakemake.params.library]['ref_numbering_seq']) if 'ref_numbering_seq' in snakemake.config['libinfo'][snakemake.params.library] else None,
     'table': os.path.abspath(os.path.join(snakemake.config['output'], 'library_tables', 
