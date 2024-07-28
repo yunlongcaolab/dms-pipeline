@@ -96,13 +96,13 @@ SomeProj
 │   ├── batch1
 │   ├── batch2
 │   └── ...
-|── library_PacBio (usually link from PacBio_raw)
-|   ├── antigen1
-|   │   ├── library1
-|   │   │   ├── library1_run1.fq.gz
-|   │   │   └── ...    
-|   │   └── library2
-|   └── ...
+├── library_PacBio (usually link from PacBio_raw)
+│   ├── antigen1
+│   │   ├── library1
+│   │   │   ├── library1_run1.fq.gz
+│   │   │   └── ...    
+│   │   └── library2
+│   └── ...
 ├── reference
 │   ├── wt_seqs
 │   │   ├── antigen1.fasta
@@ -155,9 +155,8 @@ You should properly write HADI config YAML files and run the `scripts/dms_integr
 
 ## TODO
 
-- Include scripts for library table construction.
 - Include Sort-seq and Tite-seq.
-- Integrate Quality Control (QC) for DMS experiments in the pipeline, instead of HADI.
+- Link with HADI.
 
 ## Citation
 
