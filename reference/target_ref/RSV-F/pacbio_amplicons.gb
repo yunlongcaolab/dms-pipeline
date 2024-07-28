@@ -1,0 +1,46 @@
+LOCUS       RSV-F                   1143 bp    DNA              UNK 01-JAN-1980
+DEFINITION  RSV-F yeast display library reference..
+ACCESSION   RSV-F
+VERSION     RSV-F
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     termini5        1..33
+                     /locus_tag="termini5"
+                     /label="termini5"
+     gene            34..690
+                     /locus_tag="gene"
+                     /label="gene"
+     spacer          691..1111
+                     /locus_tag="spacer"
+                     /label="spacer"
+     barcode         1112..1137
+                     /locus_tag="barcode"
+                     /label="barcode"
+     termini3        1138..1143
+                     /locus_tag="termini3"
+                     /label="termini3"
+ORIGIN
+        1 ggccgcggag gcggagggtc ggctagccat atgagaacag gttggtacac ctcagttatc
+       61 actatcgaac tatccaacat caaggaaaac aagtgtaacg gtactgatgc taaggtcaag
+      121 ttgattaagc aagaattgga taagtacaag aacgccgtga ctgaattgca attgttgatg
+      181 ggtggttccg gtggtagtgg ttctgccatt gcttctggtg ttgctgtctg taaggttttg
+      241 cacttggaag gtgaagttaa caaaattaag tctgcttgtt tgagcaccaa caaggctgtt
+      301 gtctctctct ccaacggcgt ttccgtctta accttctgtg ttttggactt gaagaactac
+      361 attgacaagc aattattacc aatcttgaac aaacaatcct gctccatttc taacattgaa
+      421 actgttattg aattccaaca aaagaacaac agactattgg aaatcaccag agaattttct
+      481 gtcaacgctg gtgttaccac tccagtttct acttacatgt tgactaactc tgaattgttg
+      541 tccttgatca acgatatgcc aattaccaat gaccaaaaga agttaatgtc taacaatgtc
+      601 caaatcgtcc gtcaacaatc ttattctatc atgtgtatca tcaaagaaga agtcttggct
+      661 tacgttgttc aattgccatt gtacggtgtc ctcgaggggg gcggttccga acaaaagctt
+      721 atttctgaag aggacttgta atagagatct gataacaaca gtgtagatgt aacaaaatcg
+      781 actttgttcc cactgtactt ttagctcgta caaaatacaa tatacttttc atttctccgt
+      841 aaacaacatg ttttcccatg taatatcctt ttctattttt cgttccgtta ccaactttac
+      901 acatacttta tatagctatt cacttctata cactaaaaaa ctaagacaat tttaattttg
+      961 ctgcctgcca tatttcaatt tgttataaat tcctataatt tatcctatta gtagctaaaa
+     1021 aaagatgaat gtgaatcgaa tcctaagaga attaatgata cggcgaccac cgagatctac
+     1081 actctttccc tacacgacgc tcttccgatc tnnnnnnnnn nnnnnnnnnn nnnnnnngcg
+     1141 gcc
+//

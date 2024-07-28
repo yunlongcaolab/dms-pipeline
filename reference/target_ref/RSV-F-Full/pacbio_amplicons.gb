@@ -1,0 +1,58 @@
+LOCUS       RSV-F-Full              1868 bp    DNA              UNK 01-JAN-1980
+DEFINITION  RSV-F-Full yeast display library reference..
+ACCESSION   RSV-F-Full
+VERSION     RSV-F-Full
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     termini5        1..131
+                     /locus_tag="termini5"
+                     /label="termini5"
+     gene            132..1595
+                     /locus_tag="gene"
+                     /label="gene"
+     spacer          1596..1836
+                     /locus_tag="spacer"
+                     /label="spacer"
+     barcode         1837..1862
+                     /locus_tag="barcode"
+                     /label="barcode"
+     termini3        1863..1868
+                     /locus_tag="termini3"
+                     /label="termini3"
+ORIGIN
+        1 tcgaggccac catggaacta ctaatcctaa aggcaaatgc aatcaccacc atcctgaccg
+       61 ccgtcacctt ctgcttcgcc tctggagagc agaagctgat cagcgaggaa gacctgggtg
+      121 gaggcggttc gcagaacatc acagaggaat tttaccagtc cacctgttcc gctgtgtcca
+      181 aaggctacct gtctgctctg agaaccggat ggtacaccag tgtcatcacc attgagctgt
+      241 ctaacatcaa agagaacaag tgcaacggca ctgatgccaa agtcaagctg atcaagcaag
+      301 agctggacaa gtacaagaat gctgtgaccg aactgcagct gctgatgcag tccacccctg
+      361 ctaccaacaa cagagccaga agggaactgc ctcggttcat gaactacacc ctgaacaacg
+      421 ccaagaaaac caatgtgacc ctgtccaaga agagaaagcg gagattcctg ggcttcctcc
+      481 tgggcgtggg ctccgccatc gcctctggcg tggccgtgtg caaggtgctg cacctggaag
+      541 gggaggtcaa caagatcaag agcgctctcc tgtccaccaa caaggccgtg gtgtccctgt
+      601 ctaatggcgt gagcgtgctg accttcaagg tgctggacct gaagaactac atcgacaagc
+      661 agctgctgcc catcctgaac aagcagtcct gttctatttc caatatcgag acagtgatcg
+      721 aatttcagca gaagaacaac cggctgctgg aaatcaccag agagttttct gtgaacgctg
+      781 gcgtgaccac acctgtgtct acctacatgc tgaccaactc cgagctcctg tctctgatca
+      841 acgacatgcc catcacaaac gaccagaaga agctgatgtc caacaacgtg cagatcgtga
+      901 gacagcaatc ctactccatc atgtgcatca tcaaagaaga agtgctggcc tacgtcgtgc
+      961 agctgcctct gtacggcgtg atcgatacac catgctggaa gctgcacacc agccctctgt
+     1021 gtaccaccaa tacaaaagag ggaagcaaca tctgcctgac ccggaccgac cggggctggt
+     1081 actgcgacaa cgctggatcc gtgtccttct tccctcaggc cgagacctgc aaggtgcagt
+     1141 ccaacagagt gttctgtgat accatgaact ccctgacact gccttctgaa gtgaacctgt
+     1201 gcaacgtgga catcttcaac cctaagtacg actgcaagat catgacctcc aagaccgacg
+     1261 tgagctctag cgtgatcacc tctctcggcg ccatcgtgtc gtgctacggc aaaaccaagt
+     1321 gcaccgcaag caataagaac agaggcatca tcaagacctt ctccaacggc tgtgactacg
+     1381 tgtctaacaa gggcgtggac acggtttctg tgggcaacac actgtactac gtgaataagc
+     1441 aagagggcaa atcgctgtat gtgaagggcg agccaatcat caacttctac gatcctctgg
+     1501 tgttcccctc tgatgagttc gacgcctcca tctctcaggt gaacgaaaag atcaaccagt
+     1561 ccctggcctt catccggaag tccgacgagc tgctgcacaa cgtgaatgcc ggcaaaagca
+     1621 caaccaatat tatgataact acgataatta tcgtaatcat cgtcatcctg ctgagtctga
+     1681 tagctgttgg ccttctgctc tactgtaagg cacggagtac gcctgttact ctgtcaaaag
+     1741 atcagctgtc cgggatcaac aatatcgcat tctcaaacaa tgatacggcg accaccgaga
+     1801 tctacactct ttccctacac gacgctcttc cgatctnnnn nnnnnnnnnn nnnnnnnnnn
+     1861 nngcggcc
+//

@@ -61,6 +61,9 @@ def count_variants(variants, lib, fastq_data, bclen, max_dist, min_dist_diff, al
     for bc in valid_barcodes:
         counts[bc] = 0
     
+    detected_lowq = set()
+    detected_invalid = set()
+
     for fastq_file in fastq_data:
         if fastq_file[-3:] == '.gz':
             f = gzip.open(fastq_file, 'rt')
@@ -84,6 +87,7 @@ def count_variants(variants, lib, fastq_data, bclen, max_dist, min_dist_diff, al
                 
             if (sum(np.array(entry.letter_annotations['phred_quality']) < lowq) > allowed_lowq):
                 fates['low quality barcode'] += 1
+                detected_lowq.add(str(entry.seq))
                 continue
             
             if entry.seq in counts:
@@ -93,16 +97,19 @@ def count_variants(variants, lib, fastq_data, bclen, max_dist, min_dist_diff, al
             
             if max_dist < 1:
                 fates['invalid barcode (unmatched)'] += 1
+                detected_invalid.add(str(entry.seq))
             else:
                 _bc = str(entry.seq)
                 _res = bktree.find_nearest(_bc, max_dist)
                 if _res[1] == "NotFound":
                     fates['invalid barcode (unmatched)'] += 1
+                    detected_invalid.add(str(entry.seq))
                     continue
                 if min_dist_diff > 0:    
                     _res = bktree.find2(_bc, max_dist+min_dist_diff)
                     if (_res[1][0]-_res[0][0] < min_dist_diff):
                         fates['invalid barcode (ambiguous)'] += 1
+                        detected_invalid.add(str(entry.seq))
                         continue
                 
                 fates['valid barcode'] += 1
@@ -113,7 +120,9 @@ def count_variants(variants, lib, fastq_data, bclen, max_dist, min_dist_diff, al
     counts = pd.DataFrame(list(counts.items()), columns=['barcode', 'count']).sort_values(['count', 'barcode'], ascending=[False, True]).reset_index(drop=True).query("count > 0")
 
     fates['valid ratio'] = fates['valid barcode'] / fates['processed']
-    fates['detected barcodes'] = len(counts)
+    fates['unique valid barcodes'] = len(counts)
+    fates['unique invalid barcodes'] = len(detected_invalid)
+    fates['unique low quality barcodes'] = len(detected_lowq)
     
     return counts, fates
 

@@ -20,8 +20,8 @@ barcode_count:
   min_dist_diff: 3  # When max_distance > 0, ensures the second closest barcode is not within this distance to the closest, to prevent ambiguous matches. Ignored if max_distance = 0.
 
 calc_escape_scores:
-  min_ref_count: 5
-  min_variant_support: 2
+  min_ref_count: 1 # Recommend: 5
+  min_variant_support: 1 # Recommend: 2
   # normalize_to_WT: true  # Normalizes fractions by dividing by the enrichment fraction of barcodes without amino acid mutations, then applies log10 transformation.
   norm_lower: 0.01
   norm_upper: 0.995  # Normalizes escape scores to [0, 1] with quantile cutoffs. Eg. For lower=0.01 and upper=0.995, scores below 1% or above 99.5% quantiles are set to 0 and 1, respectively.
@@ -30,10 +30,6 @@ calc_escape_scores:
   filter_on_single: true
   filter_on_variant: true
 
-  min_variant: # default values
-    delta_ML_meanF: -1.2
-  min_single: # default values
-    expr_avg: -1.2
   keep_missing: true # keep the escape scores for mutants with missing values in the variant/mut filters
   calc_no_filter: true # also output the results without any filters
   include_stop: false
@@ -45,16 +41,8 @@ calc_escape_scores:
   
 libinfo:
   RSV-F-UP-merged:
-    bclen: 26
     target: RSV-F
-    single_filters: 
-      expr_avg: reference/filters/RSV-F/expr_single_20240401_RSV-F-lib.csv
-    variant_filters: 
-      delta_ML_meanF: 
-        - reference/filters/RSV-F/expr_RSV-F-lib1_20240401.csv
-        - reference/filters/RSV-F/expr_RSV-F-lib2_20240401.csv
   RSV-F-lib1:
-    bclen: 26
     target: RSV-F
     single_filters: 
       expr_avg: reference/filters/RSV-F/expr_single_20240401_RSV-F-lib.csv
@@ -62,7 +50,6 @@ libinfo:
       delta_ML_meanF: 
         - reference/filters/RSV-F/expr_RSV-F-lib1_20240401.csv
   RSV-F-lib2:
-    bclen: 26
     target: RSV-F
     single_filters: 
       expr_avg: reference/filters/RSV-F/expr_single_20240401_RSV-F-lib.csv
@@ -70,11 +57,7 @@ libinfo:
       delta_ML_meanF: 
         - reference/filters/RSV-F/expr_RSV-F-lib2_20240401.csv
   RSV-F-Full-lib1:
-    bclen: 26
     target: RSV-F-Full
-    wt_seq: reference/wt_seqs/RSV-F-Full.fasta
-    single_filters: {}
-    variant_filters: {}
 
 ccs_align:
   cpu_per_task: 8
@@ -131,3 +114,7 @@ default_template: reference/target_ref/default_template.txt
 default_libinfo:
   ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
   bclen: 26
+  min_variant: # default values
+    delta_ML_meanF: -1.2
+  min_single: # default values
+    expr_avg: -1.2

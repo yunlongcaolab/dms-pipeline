@@ -195,11 +195,11 @@ rule escape_calc:
         library = lambda wildcards: TASKS['escape_calc'][wildcards.batch][wildcards.sample]['library'],
         antibody = lambda wildcards: TASKS['escape_calc'][wildcards.batch][wildcards.sample]['antibody'],
         ref = lambda wildcards: TASKS['escape_calc'][wildcards.batch][wildcards.sample]['ref'],
+        table = lambda wildcards: os.path.join(config['output'], 'library_tables', config['libinfo'][TASKS['escape_calc'][wildcards.batch][wildcards.sample]['library']]['target'], TASKS['escape_calc'][wildcards.batch][wildcards.sample]['library'], 'variant_table.csv'),
         wt_seq = lambda wildcards: (
-            os.path.join(config['wt_seq'], config['libinfo'][TASKS['escape_calc'][wildcards.batch][wildcards.sample]['library']]['target'] + '.fasta') 
-            if 'wt_seq' in config else 
+            os.path.join(config['wt_seqs'], config['libinfo'][TASKS['escape_calc'][wildcards.batch][wildcards.sample]['library']]['target'] + '.fasta') 
+            if 'wt_seqs' in config else 
                 os.path.join(config['target_ref'], '..', 'wt_seqs', 
-                config['libinfo'][TASKS['escape_calc'][wildcards.batch][wildcards.sample]['library']]['target'], 
                 config['libinfo'][TASKS['escape_calc'][wildcards.batch][wildcards.sample]['library']]['target'] + '.fasta')
         )
 

@@ -80,14 +80,14 @@ def filter_expr_bind(
     if filter_on_variant and variant_filters is not None:
         for prop, thres in min_variant.items():
             if prop not in variant_filters:
-                log_handle.write(f"Missing filter for {prop}. Skip {prop} variant filter.\n")
+                sys.stderr.write(f"Missing filter for {prop}. Skip {prop} variant filter.\n")
                 continue
 
             filt_files = variant_filters[prop]
             var_filt_df_merge = []
             for filt_file in filt_files:
                 if not os.path.exists(filt_file):
-                    log_handle.write(f"Missing file {filt_file}. Skip {prop} variant filter.\n")
+                    sys.stderr.write(f"Missing file {filt_file}. Skip {prop} variant filter.\n")
                     continue
                 var_filt_df = pd.read_csv(filt_file)
                 
@@ -100,6 +100,10 @@ def filter_expr_bind(
 
                 var_filt_df_merge.append(var_filt_df)
             
+            if len(var_filt_df_merge) == 0:
+                sys.stderr.write(f"No filter files. Skip {prop} variant filter.\n")
+                continue
+
             var_filt_df = pd.concat(var_filt_df_merge, ignore_index=True).groupby('barcode')[prop].mean().reset_index() # merge multiple filters
 
             log_handle.write(f"Apply variant filter {prop}. Keep missing? {keep_missing}\n")
@@ -262,9 +266,7 @@ _info = {
     'wt_seq': snakemake.params.wt_seq,
     'ref_numbering_seq': os.path.abspath(
         snakemake.config['libinfo'][snakemake.params.library]['ref_numbering_seq']) if 'ref_numbering_seq' in snakemake.config['libinfo'][snakemake.params.library] else None,
-    'table': os.path.abspath(os.path.join(snakemake.config['output'], 'library_tables', 
-                          snakemake.config['libinfo'][snakemake.params.library]['target'], 
-                          f'{snakemake.params.library}_variant_table.csv')),
+    'table': snakemake.params.table,
     'batch': snakemake.wildcards.batch,
     'sample': snakemake.wildcards.sample,
 
@@ -285,14 +287,13 @@ _stat = {}
 for info_item in ['library', 'antibody', 'sample']:
     _stat[info_item] = _info[info_item]
 
+libinfo = snakemake.config["libinfo"][_info['library']]
+
 for filter_type in ['single', 'variant']:
-    if _info[f'filter_on_{filter_type}'] and (snakemake.config["libinfo"][snakemake.params.library][f"{filter_type}_filters"] is not None):
-        for prop, files in snakemake.config["libinfo"][snakemake.params.library][f"{filter_type}_filters"].items():
+    if _info[f'filter_on_{filter_type}'] and f"{filter_type}_filters" in libinfo and (libinfo[f"{filter_type}_filters"] is not None):
+        for prop, files in libinfo[f"{filter_type}_filters"].items():
             _info[f'{filter_type}_{prop}_filter'] = [os.path.abspath(x) for x in files] if isinstance(files, list) else os.path.abspath(files)
-            try:
-                _info[f'{filter_type}_{prop}_min'] = snakemake.config["libinfo"][snakemake.params.library][f"min_{filter_type}"][prop]
-            except: # use default value
-                _info[f'{filter_type}_{prop}_min'] = snakemake.config["calc_escape_scores"][f"min_{filter_type}"][prop]
+            _info[f'{filter_type}_{prop}_min'] = libinfo[f"min_{filter_type}"][prop]
 
 table, batch, sample, ref = _info['table'], _info['batch'], _info['sample'], _info['ref']
 
@@ -335,7 +336,12 @@ _stat['detected_single_mutants'] = len(df.query('sample_count > 0 and n_aa_subst
 
 WT_barcodes = df.query('n_aa_substitutions == 0')
 
-WT_enrichment = (WT_barcodes['sample_count'].sum().item()/ncounts_escape) / (WT_barcodes['ref_count'].sum().item()/ncounts_ref)
+ref_wt_count = WT_barcodes['ref_count'].sum().item()
+if ref_wt_count > 0:
+    WT_enrichment = (WT_barcodes['sample_count'].sum().item()/ncounts_escape) / (ref_wt_count/ncounts_ref)
+else:
+    WT_enrichment = np.nan
+
 _stat['WT_enrichment'] = WT_enrichment
 
 df['escape_enrichment_log10_fold_change'] = np.log10(df['escape_score'] / WT_enrichment)
@@ -368,10 +374,10 @@ df['escape_score'] = df['raw_escape_score'].map(lambda x: scaling(x, mn, mx))
 
 df = filter_expr_bind(
     df = df, 
-    single_filters = snakemake.config["libinfo"][_info['library']]["single_filters"],
-    variant_filters = snakemake.config["libinfo"][_info['library']]["variant_filters"],
-    min_single = snakemake.config["calc_escape_scores"]["min_single"],
-    min_variant = snakemake.config["calc_escape_scores"]["min_variant"],
+    single_filters = libinfo["single_filters"] if 'single_filters' in libinfo else None,
+    variant_filters = libinfo["variant_filters"] if 'variant_filters' in libinfo else None,
+    min_single = libinfo[f"min_single"] if 'min_single' in libinfo else {},
+    min_variant = libinfo["min_variant"] if 'min_variant' in libinfo else {},
     keep_missing = _info["keep_missing"],
     filter_on_variant = _info["filter_on_variant"],
     filter_on_single = _info["filter_on_single"],
