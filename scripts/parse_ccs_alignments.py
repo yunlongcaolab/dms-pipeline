@@ -556,7 +556,7 @@ min_site = min(wildtype_aa)
 max_site = max(wildtype_aa)
 
 print(f"Detected {len(table)} variants")
-print(f"Detected single mutations at {len(detected_single_muts)} sites from {min_site} to {max_site}")
+print(f"Detected {len(detected_single_muts)} single mutations at sites from {min_site} to {max_site}")
 
 missing_muts = []
 for site in range(min_site, max_site + 1):
@@ -579,6 +579,6 @@ print(f"Fraction of single-mut variants: {single_mut_ratio:.2f}")
 
 # ratio of WT
 wt_ratio = len(table.query('n_aa_substitutions == 0')) / len(table)
-print(f"Fraction of WT variants: {wt_ratio:.2f}")
+print(f"Fraction of WT: {wt_ratio:.2f}")
 
 table.to_csv(codon_variant_table_file, index=False)

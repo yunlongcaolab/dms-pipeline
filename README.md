@@ -75,7 +75,6 @@ All items specified in "default_libinfo" will be used as default values for all 
 
 ### Files
 
-
 We recommend the following directory structure to use this pipeline. First, build a directory named 'SomeProj' in any place you like, and clone this repository at another place (split code and data). 
 
 Then, make the structure as follows:
@@ -131,6 +130,8 @@ dms-pipeline (this repo)
 └── ...
 ```
 
+Now, copy the `config.yaml` file to the `SomeProj` directory and modify the paths and configuration in it.
+
 ### Run the pipeline
 
 Check the `run_snake.sh` script and run it to start the pipeline.
@@ -142,6 +143,8 @@ Check the `run_snake.sh` script and run it to start the pipeline.
 Use `all` rule to process all data according to the configuration; use `all_tables` to run the PacBio part only.
 
 It's OK to run the pipeline with other directory structures, as long as you write the `config.yaml` according.
+
+By default, the pipeline use slurm to submit jobs. If you are not using slurm, you can modify the `run_snake.sh`.
 
 ### Downstream analyses
 
