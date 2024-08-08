@@ -72,7 +72,7 @@ rule ccs_align:
         cpu_per_task = config['ccs_align']['cpu_per_task']
     shell:
         f"mkdir -p {os.path.join(config['output'], 'library_tables/{wildcards.target}/{wildcards.library}')} && "
-        f"minimap2 -a -A2 -B4 -O12 -E2 --end-bonus=23 --secondary=no --cs -t {config['ccs_align']['cpu_per_task']} {{input.ref}} {{input.reads}} | samtools view -bS > {{output}}"
+        f"minimap2 -a -A5 -B7 -O16 -E2 --end-bonus=23 --secondary=no --cs -t {config['ccs_align']['cpu_per_task']} {{input.ref}} {{input.reads}} | samtools view -bS > {{output}}"
 
 rule library_table:
     input:
@@ -95,9 +95,10 @@ if 'library_merge' in config:
     ruleorder: library_merge > library_table
     rule library_merge:
         input:
-            lambda wc: [
+            tables=lambda wc: [
                 os.path.join(config['output'], f'library_tables/{wc.target}/{lib}/variant_table.csv') for lib in config['library_merge'][wc.target][wc.library]
-            ]
+            ],
+            ref = os.path.join(config['target_ref'], '{target}/{target}.fasta')
         output:
             os.path.join(config['output'], 'library_tables/{target}/{library}/variant_table.csv')
         resources:

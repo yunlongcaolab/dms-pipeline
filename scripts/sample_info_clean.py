@@ -95,24 +95,31 @@ def main(config, batches, logobj):
         if 'group' not in _df.columns:
             _df = _df.assign(group = lambda x: x['library'])
 
+        for (_lib, _grp), _samples in _df.query("is_ref == 'Y'").groupby(['library', 'group'])['sample']:
+            all_tasks['ref_merge'][f"{batch}_{_lib}_{_grp}_REF_Merge"] = [batch+'_'+x for x in _samples]
+
         for i in _df.index:
             row = _df.loc[i]
             if (row['is_ref'] == "N") and (not row['antibody'] in exclude_antibody_names):
-                if batch not in all_tasks['escape_calc']:
-                    all_tasks['escape_calc'][batch] = {}
-                all_tasks['escape_calc'][batch][batch+'_'+row["sample"]] = {
-                        "library": row['library'],
-                        "antibody": row['antibody'],
-                        "ref": batch+f"_{row['library']}_{row['group']}_REF_Merge"
-                    }
+                _ref_name = f"{batch}_{row['library']}_{row['group']}_REF_Merge"
+                if _ref_name in all_tasks['ref_merge']:
+                    if batch not in all_tasks['escape_calc']:
+                        all_tasks['escape_calc'][batch] = {}
+                    all_tasks['escape_calc'][batch][batch+'_'+row["sample"]] = {
+                            "library": row['library'],
+                            "antibody": row['antibody'],
+                            "ref": _ref_name
+                        }
+                else:
+                    logobj.write(f"Warning: {batch} - {row['sample']}. Reference not found. Skipped.\n")
+                    logobj.flush()
+
             all_tasks['barcode_count'][batch+"_"+row["sample"]] = {
                     "library": row['library'],
                     "batch": batch,
                     "fastq_files": row['fastq_files'].split(','),
                 }
 
-        for (_lib, _grp), _samples in _df.query("is_ref == 'Y'").groupby(['library', 'group'])['sample']:
-            all_tasks['ref_merge'][f"{batch}_{_lib}_{_grp}_REF_Merge"] = [batch+'_'+x for x in _samples]
 
         if (sample_info / batch / 'sort_seq.csv').exists():
             _libs = pd.unique(pd.read_csv(sample_info / batch / 'sort_seq_info.csv')['library'])
@@ -149,11 +156,7 @@ if __name__ == "__main__":
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
     with open(log_file, 'w') as logobj:
-        try:
-            BATCHES = os.listdir(config['sample_info_bc'])
-        except FileNotFoundError:
-            logobj.write(f"{config['sample_info_bc']} not found.\n")
-            BATCHES = []
+        BATCHES = os.listdir(config['sample_info_bc'])
         
         logobj.write(f"Start: {time.ctime()}\n")
         logobj.write(f"Sample Info Directory: {config['sample_info_bc']}\n")

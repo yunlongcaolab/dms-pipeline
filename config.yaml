@@ -82,8 +82,8 @@ sample_name_replace: # The following characters are not allowed and will be repl
 
 parse_specs: 
   default:
-    query_clip5: 6
-    query_clip3: 6
+    query_clip5: null
+    query_clip3: null
     termini5:
       filter:
         clip5: 3

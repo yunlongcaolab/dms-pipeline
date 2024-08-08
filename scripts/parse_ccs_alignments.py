@@ -13,7 +13,7 @@ from plotnine.ggplot import save_as_pdf_pages
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import os, math
+import yaml
 
 output_dir = Path(snakemake.output[0]).parent
 other_cutoff = 0.02  # group as "other" reasons with <= this frac
@@ -34,6 +34,7 @@ pacbio_runs = pd.DataFrame({
 })
 
 ccs_summaries = Summaries(pacbio_runs, report_col = None)
+output_stat_info = {}
 
 plots = []
 if ccs_summaries.has_zmw_stats():
@@ -84,6 +85,9 @@ readstats = (
 aligned_df.to_csv(processed_ccs, index=False)
 filtered_df.to_csv(output_dir / 'filtered_ccs.csv.gz', index=False)
 readstats.to_csv(output_dir / 'readstats.csv', index=False)
+
+output_stat_info['aligned_ccs'] = len(aligned_df)
+output_stat_info['filtered_ccs'] = len(filtered_df)
 
 #################
 ##### plots #####
@@ -310,6 +314,10 @@ for desc, query_str in [
     # get just CCSs in that category
     df = processed_ccs.query(query_str)
 
+    if len(df) == 0:
+        print(f"No CCSs for {desc}")
+        continue
+
     # compute empirical accuracy
     empirical_acc.append(
         alignparse.consensus.empirical_accuracy(df,
@@ -402,7 +410,11 @@ p = (
 plots.append(p)
 ##### plots done #####
 
+output_stat_info['consensus_barcodes'] = len(consensus)
+
 consensus = consensus.query('number_of_indels == 0')
+
+output_stat_info['consensus_barcodes_remove_indels)'] = len(consensus)
 
 lib_target_counts = (
     consensus
@@ -414,7 +426,7 @@ lib_target_counts = (
 p = (ggplot(lib_target_counts.assign(xlabel=lambda x: x['target'] + ', ' + x['library']),
             aes('xlabel', 'consensus sequences')) +
      geom_point(size=3) +
-     theme(figure_size=(0.5 * nlibs * ntargets, 1.75),
+     theme(figure_size=(0.5 * nlibs * ntargets, 2),
            axis_text_x=element_text(angle=90)) +
      xlab('') +
      scale_y_log10()
@@ -436,16 +448,13 @@ has_subs_by_target = (
 p = (ggplot(has_subs_by_target.assign(xlabel=lambda x: x['target'] + ', ' + x['library']),
             aes('xlabel', 'n_barcodes', color='has_substitutions')) +
      geom_point(size=3, alpha=0.7) +
-     theme(figure_size=(0.5 * nlibs * ntargets, 1.75),
+     theme(figure_size=(0.5 * nlibs * ntargets, 2),
            axis_text_x=element_text(angle=90)) +
      xlab('') +
      scale_y_log10() +
      scale_color_manual(values=CBPALETTE)
      )
 plots.append(p)
-
-
-nt_variant_table_file = output_dir / 'consensus.csv.gz'
 
 print(f"Culling the {len(consensus)} barcodes to remove mutated non-primary targets")
 
@@ -471,8 +480,9 @@ consensus = (
     .query('duplicate_count.isnull()', engine='python')
     )
 print(f"After removing duplicates, there are {len(consensus)} barcodes.")
-print(f"Writing nucleotide variants to {nt_variant_table_file}")
 
+nt_variant_table_file = output_dir / 'consensus.csv.gz'
+print(f"Writing nucleotide variants to {nt_variant_table_file}")
 consensus.to_csv(nt_variant_table_file, index=False)
 
 max_nseqs = 8  # plot together all barcodes with >= this many sequences
@@ -502,7 +512,7 @@ variants = CodonVariantTable(
                 primary_target=primary_target,
                 )
 
-print(variants.n_variants_df(samples=None).pivot_table(index=['target'], columns='library', values='count').head())
+# print(variants.n_variants_df(samples=None).pivot_table(index=['target'], columns='library', values='count').head())
 
 max_support = 10  # group variants with >= this much support
 p = variants.plotVariantSupportHistogram(max_support=max_support,
@@ -542,6 +552,10 @@ codon_variant_table_file = output_dir / 'variant_table.csv'
 print(f"Writing codon-variant table to {codon_variant_table_file}")
 
 table = variants.barcode_variant_df
+output_stat_info['valid_barcodes'] = len(table)
+
+table.to_csv(codon_variant_table_file, index=False)
+
 # count detected single mutations
 detected_single_muts = set()
 wildtype_aa = {}
@@ -552,18 +566,24 @@ for muts in table['aa_substitutions']:
             _wt = mut[0]
             detected_single_muts.add(mut)
             wildtype_aa[_site] = _wt
-min_site = min(wildtype_aa)
-max_site = max(wildtype_aa)
 
-print(f"Detected {len(table)} variants")
-print(f"Detected {len(detected_single_muts)} single mutations at sites from {min_site} to {max_site}")
+# Missed sites
+missed_sites = []
+for site in range(1, len(geneseq) // 3 + 1):
+    if site not in wildtype_aa:
+        missed_sites.append(site)
+
+output_stat_info['n_detected_sites'] = len(wildtype_aa)
+output_stat_info['n_missed_sites'] = len(missed_sites)
+output_stat_info['missed_sites'] = list(missed_sites)
+
+print(f"Detected {len(table)} valid barcodes")
+print(f"Detected {len(detected_single_muts)} single mutations at {len(wildtype_aa)} sites")
+
+output_stat_info['n_detected_single_mutations'] = len(detected_single_muts)
 
 missing_muts = []
-for site in range(min_site, max_site + 1):
-    if site not in wildtype_aa:
-        print('Missing site:', site)
-        continue
-    ref_aa = wildtype_aa[site]
+for site, ref_aa in wildtype_aa.items():
     for mut_aa in 'ACDEFGHIKLMNPQRSTVWY':
         if mut_aa == ref_aa:
             continue
@@ -573,12 +593,23 @@ for site in range(min_site, max_site + 1):
 
 print("Missing single mutations:", missing_muts)
 
+output_stat_info['n_missed_single_mutations'] = len(missing_muts)
+with open(output_dir / 'missing_single_mutations.txt', 'w') as f:
+    f.write('\n'.join(missing_muts))
+
 # ratio of single-mut variants
 single_mut_ratio = len(table.query('n_aa_substitutions == 1')) / len(table)
 print(f"Fraction of single-mut variants: {single_mut_ratio:.2f}")
+output_stat_info['single_mut_ratio'] = single_mut_ratio
 
 # ratio of WT
 wt_ratio = len(table.query('n_aa_substitutions == 0')) / len(table)
 print(f"Fraction of WT: {wt_ratio:.2f}")
+output_stat_info['WT_ratio'] = wt_ratio
 
-table.to_csv(codon_variant_table_file, index=False)
+# ratio of multi-mut variants
+multi_mut_ratio = len(table.query('n_aa_substitutions > 1')) / len(table)
+print(f"Fraction of multi-mut variants: {multi_mut_ratio:.2f}")
+output_stat_info['multi_mut_ratio'] = multi_mut_ratio
+
+yaml.dump(output_stat_info, open(output_dir / f'output_stat_info_{snakemake.wildcards.library}.yaml', 'w'))
