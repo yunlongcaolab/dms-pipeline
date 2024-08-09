@@ -4,8 +4,7 @@ import yaml
 
 target = snakemake.wildcards.target
 merge_name = snakemake.wildcards.library
-output_stat = Path(snakemake.output[0]).parent / f'output_stat_info_{merge_name}.yaml'
-
+output_dir = Path(snakemake.output[0]).parent
 output_stat_info = {}
 
 df = pd.concat([
@@ -72,6 +71,7 @@ output_stat_info['missed_sites'] = list(missed_sites)
 
 print(f"Detected {len(table)} valid barcodes")
 print(f"Detected {len(detected_single_muts)} single mutations at {len(wildtype_aa)} sites")
+output_stat_info['n_detected_single_mutations'] = len(detected_single_muts)
 
 missing_muts = []
 for site, ref_aa in wildtype_aa.items():
@@ -85,7 +85,8 @@ for site, ref_aa in wildtype_aa.items():
 print("Missing single mutations:", missing_muts)
 
 output_stat_info['n_missed_single_mutations'] = len(missing_muts)
-output_stat_info['missed_single_mutations'] = missing_muts
+with open(output_dir / 'missing_single_mutations.txt', 'w') as f:
+    f.write('\n'.join(missing_muts))
 
 # ratio of single-mut variants
 single_mut_ratio = len(table.query('n_aa_substitutions == 1')) / len(table)
@@ -103,4 +104,4 @@ print(f"Fraction of multi-mut variants: {multi_mut_ratio:.2f}")
 output_stat_info['multi_mut_ratio'] = multi_mut_ratio
 
 output_dir = Path(snakemake.output[0]).parent
-yaml.dump(output_stat_info, open(output_stat, 'w'))
+yaml.dump(output_stat_info, open(output_dir / f'output_stat_info_{merge_name}.yaml', 'w'))

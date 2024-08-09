@@ -98,7 +98,11 @@ if 'library_merge' in config:
             tables=lambda wc: [
                 os.path.join(config['output'], f'library_tables/{wc.target}/{lib}/variant_table.csv') for lib in config['library_merge'][wc.target][wc.library]
             ],
-            ref = os.path.join(config['target_ref'], '{target}/{target}.fasta')
+            ref = lambda wc: (
+                os.path.join(config['wt_seqs'], wc.target + '.fasta') 
+                if 'wt_seqs' in config else 
+                    os.path.join(config['target_ref'], '..', 'wt_seqs', wc.target + '.fasta')
+            )
         output:
             os.path.join(config['output'], 'library_tables/{target}/{library}/variant_table.csv')
         resources:
