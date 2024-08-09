@@ -9,6 +9,8 @@ def site_plot(data: pd.DataFrame, use_col: str) -> alt.Chart:
 
     sys.stdout.write(f"Plotting {use_col}...\n")
 
+    data['sample'] = data['sample'] + ' (' + data['antibody'] + ' ' + data['library'] + ')'
+
     base = alt.Chart(data).encode(
             x=alt.X("site_number:Q", title="Site"),
             y=alt.X(use_col+":Q", title='site escape'),
@@ -31,7 +33,7 @@ def stat_plots(stat: pd.DataFrame) -> alt.Chart:
         groupby=['pass_QC']
     ).mark_arc(innerRadius=50).encode(
         theta='count:Q',
-        color='pass_QC:N',
+        color=alt.Color('pass_QC:N').scale(domain=['True', 'False'], range=['#66ccff', '#ff6666']),
     ).properties(width=200, height=200).facet('library:N', columns=3)
     
     charts &= pass_QC
@@ -40,7 +42,7 @@ def stat_plots(stat: pd.DataFrame) -> alt.Chart:
     ncounts = alt.Chart(stat).mark_bar().encode(
         x=alt.X('ncounts_escape:Q', bin=alt.Bin(maxbins=20), title='# of valid reads in the sample'),
         y='count()',
-        color='pass_QC:N'
+        color=alt.Color('pass_QC:N').scale(domain=['True', 'False'], range=['#66ccff', '#ff6666']),
     ).properties(width=200, height=200).facet('library:N', columns=3)
 
     charts &= ncounts
@@ -48,7 +50,7 @@ def stat_plots(stat: pd.DataFrame) -> alt.Chart:
     WT_enrich_dist = alt.Chart(stat).mark_bar().encode(
         x=alt.X('WT_enrichment:Q', bin=alt.Bin(maxbins=40), title='WT enrichment'),
         y='count()',
-        color='pass_QC:N'
+        color=alt.Color('pass_QC:N').scale(domain=['True', 'False'], range=['#66ccff', '#ff6666']),
     ).properties(width=200, height=200).facet('library:N', columns=3)
 
     charts &= WT_enrich_dist
@@ -64,6 +66,7 @@ scores = pd.read_csv(snakemake.input[0]).merge(
 pass_df = scores[scores['pass_QC'] == True]
 fail_df = scores[scores['pass_QC'] == False]
 
+samples['pass_QC'] = samples['pass_QC'].astype(str)
 
 stat_plots(samples).save(snakemake.output[-1])
 

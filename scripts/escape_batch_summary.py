@@ -24,7 +24,10 @@ for _ in snakemake.input:
 for sample, files in sample_files.items():
     with open(files['stat'], 'r') as f:
         stat = yaml.safe_load(f)
-    df = pd.read_csv(files['scores']).assign(sample=sample)
+    df = pd.read_csv(files['scores']).assign(
+        sample=sample,
+        antibody=stat['antibody'],
+    )
     df_merge.append(df)
 
     stat_df.append(pd.DataFrame(stat, index=[sample]))
