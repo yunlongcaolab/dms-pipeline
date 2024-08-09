@@ -414,7 +414,7 @@ output_stat_info['consensus_barcodes'] = len(consensus)
 
 consensus = consensus.query('number_of_indels == 0')
 
-output_stat_info['consensus_barcodes_remove_indels)'] = len(consensus)
+output_stat_info['consensus_barcodes_remove_indels'] = len(consensus)
 
 lib_target_counts = (
     consensus
@@ -530,12 +530,12 @@ for mut_type in ['aa', 'codon']:
 
 p = variants.plotNumCodonMutsByType(variant_type='all', samples=None,
                                     ylabel='mutations per variant',
-                                    heightscale=0.8)
+                                    heightscale=1.4)
 p = p + theme(panel_grid_major_x=element_blank())  # no vertical grid lines
 plots.append(p)
 p = variants.plotNumCodonMutsByType(variant_type='all', samples=None,
                                     ylabel='mutations per variant', 
-                                    min_support=2, heightscale=0.8)
+                                    min_support=2, heightscale=1.4)
 p = p + theme(panel_grid_major_x=element_blank())  # no vertical grid lines
 plots.append(p)
 

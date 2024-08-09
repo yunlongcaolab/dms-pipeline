@@ -1,17 +1,17 @@
 raw_bc: rawdata_example/barcode_sequencing
 raw_lib: rawdata_example/library_sequencing
 sample_info_bc: rawdata_example/sample_info_bc
-pipeline: /lustre/grp/cyllab/jianfc/Antibody/develop/dms-pipeline
+pipeline: /lustre/grp/cyllab/jianfc/Antibody/develop/dms-pipeline # directory of the dms-pipeline scripts (this repo)
 
 target_ref: reference/target_ref
-wt_seqs: reference/wt_seqs
+wt_seqs: reference/wt_seqs # directory for the wt_seqs files, default: target_ref/../wt_seqs
 
-output: output_example
+output: output_example # directory to save all the output files
 
 batches: all # specify the batch names to process, or 'all' to process all batches
 
-fq_suffix: '*q.gz'
-R2_pattern: '((_2)|(_R2))\.f(ast)?q\.gz'
+fq_suffix: '*q.gz' # define the pattern of fastq files that will be automatically detected in the NGS raw data directory
+R2_pattern: '((_2)|(_R2))\.f(ast)?q\.gz' # define the pattern of R2 fastq files, which will be excluded from the fastq detection
 
 barcode_count:
   lowq: 20  # Minimum sequencing quality required.
