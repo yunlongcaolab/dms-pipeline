@@ -355,16 +355,17 @@ assert df['escape_score'].max() > 0, "No escape score is greater than 0."
 mn = np.nanquantile(df['escape_score'], _info["norm_lower"])
 mx = np.nanquantile(df['escape_score'], _info["norm_upper"])
 
-assert mn < mx, f"Lower quantile {mn} is not less than upper quantile {mx}"
-
 # adjust error bound if max is 0
 _upper_adj = 0
 while mx == 0:
     _upper_adj += 1
     mx = np.nanquantile(df['escape_score'], 1.0 - (1.0-_info['norm_upper']) / 2**_upper_adj)
 
+assert mn < mx, f"Lower quantile {mn} is not less than upper quantile {mx}"
+
 _stat['scaling_lower'] = mn.item()
 _stat['scaling_upper'] = mx.item()
+_stat['upper_quantile_adj'] = 1.0 - (1.0-_info['norm_upper']) / 2**_upper_adj
 
 log_handle.write(f"\nEnrichment ratio scaling - min: {mn}, max: {mx}, upper adjusted: {1.0 - (1.0-_info['norm_upper']) / 2**_upper_adj}\n")
 
