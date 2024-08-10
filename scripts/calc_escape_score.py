@@ -262,6 +262,7 @@ config_output = Path(snakemake.config['output'])
 _info = {
     'library': snakemake.params.library,
     'antibody': snakemake.params.antibody,
+    'antigen': snakemake.config['libinfo'][snakemake.params.library]['target'],
     'ref': snakemake.params.ref,
     'wt_seq': snakemake.params.wt_seq,
     'ref_numbering_seq': os.path.abspath(

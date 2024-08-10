@@ -1,7 +1,6 @@
 raw_bc: rawdata_example/barcode_sequencing
 raw_lib: rawdata_example/library_sequencing
 sample_info_bc: rawdata_example/sample_info_bc
-pipeline: /lustre/grp/cyllab/jianfc/Antibody/develop/dms-pipeline # directory of the dms-pipeline scripts (this repo)
 
 target_ref: reference/target_ref
 wt_seqs: reference/wt_seqs # directory for the wt_seqs files, default: target_ref/../wt_seqs
