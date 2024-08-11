@@ -3,7 +3,7 @@ channels:
  - conda-forge
  - bioconda
 dependencies:
- - biopython
+ - biopython>=1.83
  - numpy
  - pandas
  - pyyaml

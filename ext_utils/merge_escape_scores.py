@@ -25,7 +25,7 @@ def main(args):
         use_cols = ['aa_substitutions', 'escape_score']
     else:
         files = Path(args.input_dir).glob(f"escape_calc/*/*/single_mut_escape_scores.csv")
-        use_cols = ['wildtype', 'site', 'mutation', 'mut_escape', 'single_mut_escape']
+        use_cols = ['wildtype', 'site', 'mutation', 'mut_escape']
 
     df = []
     stat_df = []
