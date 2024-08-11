@@ -433,7 +433,7 @@ if ref_numbering_seq is None:
     label_sites = [str(i + seq_offset) for i in range(len(wt_seq))]
 else:
     log_handle.write(f'\nAlignment for numbering.\n')
-    label_sites = generate_sequence_numbering(ref_numbering_seq, wt_seq, mode='global')
+    label_sites = generate_sequence_numbering(ref_numbering_seq, wt_seq, mode='local')
 
 
 effects_df, site_effects_df = calc_epistatsis_model(
