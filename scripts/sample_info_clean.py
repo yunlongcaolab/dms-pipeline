@@ -156,9 +156,9 @@ if __name__ == "__main__":
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
     if 'batches' in config and config['batches'] != 'all':
-        BATCHES = os.listdir(config['sample_info_bc'])
-    else:
         BATCHES = config['batches'].split(',')
+    else:
+        BATCHES = os.listdir(config['sample_info_bc'])
     
     with open(log_file, 'w') as logobj:
         
