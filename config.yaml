@@ -7,7 +7,7 @@ wt_seqs: reference/wt_seqs # directory for the wt_seqs files, default: target_re
 
 output: output_example # directory to save all the output files
 
-batches: all # specify the batch names to process, or 'all' to process all batches
+batches: all # specify the batch names to process, or 'all' to process all batches, split by ','
 
 fq_suffix: '*q.gz' # define the pattern of fastq files that will be automatically detected in the NGS raw data directory
 R2_pattern: '((_2)|(_R2))\.f(ast)?q\.gz' # define the pattern of R2 fastq files, which will be excluded from the fastq detection
