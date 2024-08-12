@@ -155,8 +155,12 @@ if __name__ == "__main__":
     log_file = Path(config['output'])/"logs"/"sample_info_clean.log.txt"
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(log_file, 'w') as logobj:
+    if 'batches' in config and config['batches'] != 'all':
         BATCHES = os.listdir(config['sample_info_bc'])
+    else:
+        BATCHES = config['batches'].split(',')
+    
+    with open(log_file, 'w') as logobj:
         
         logobj.write(f"Start: {time.ctime()}\n")
         logobj.write(f"Sample Info Directory: {config['sample_info_bc']}\n")
