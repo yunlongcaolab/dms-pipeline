@@ -6,6 +6,7 @@ partitions=cpu1,cpu2,sugon,hygon
 
 timestamp=$(date +%Y%m%d%H%M%S)
 
+pipeline=$(pwd)
 workdir=$(pwd)
 rule=$1
 config=$workdir/config.yaml
@@ -32,7 +33,7 @@ cat << EOF > $slurm_script
 
 python $(pwd)/scripts/sample_info_clean.py --config=$config --workdir=$workdir
 
-snakemake $rule --snakefile $snakefile --configfile $config --executor cluster-generic --cluster-generic-submit-cmd "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048
+snakemake $rule --snakefile $snakefile --config pipeline=$pipeline --configfile $config --executor cluster-generic --cluster-generic-submit-cmd "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048
 EOF
 
 sbatch $slurm_script
