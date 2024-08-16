@@ -17,7 +17,7 @@ def _fit_log_normal(
     Args:
         data_bins (dict[str, int]): A dictionary mapping bin names to the number of cells in the bin
         bins (dict[str, dict[str, float]]): A dictionary mapping bin names to the left and right boundary of the bin
-        count_coef (int, optional): Coefficient to multiply the count. Defaults to None.
+        count_coef (int, optional): Coefficient to multiply the count. Defaults to None (auto-determined based on the total counts).
     Returns:
         tuple[float, float]: A tuple of (mean, std) of the normal distribution
     """

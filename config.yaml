@@ -73,8 +73,9 @@ default_libinfo:
   min_single: # default thresholds
     expr_avg: -1.2
 
-default_template: reference/target_ref/default_template.txt
 
+# the following fields usually do not need to be changed
+default_template: reference/target_ref/default_template.txt
 parse_specs: 
   default:
     query_clip5: null
@@ -103,15 +104,12 @@ parse_specs:
         clip3: 3
         mutation_nt_count: 1
         mutation_op_count: null
-
-
 exclude_antibody_names: # The following antibody names will be ignored while calculating the escape scores
   - 'None'
   - 'none'
   - ''
   - 'empty'
   - 'Empty'
-
 sample_name_replace: # The following characters are not allowed and will be replaced by a hyphen
   '/': '-'
   ' ': '-'

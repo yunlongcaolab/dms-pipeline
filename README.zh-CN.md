@@ -9,9 +9,7 @@
 
 您可以参考我们实验室发表的文章[这里](#Citation)获取更多信息。
 
-值得注意的是，由于已发表文章中呈现的一些数据可能并未通过最新的方法处理，文章中显示的详细结果，包括其对应的Github仓库中的结果，可能与本仓库方法生成的结果不完全相同，但这些结果不应存在结论上的差异。
-
-建议使用此仓库中的最新版本方法。
+值得注意的是，由于已发表文章中呈现的一些数据可能并未通过最新的方法处理，文章中显示的详细结果，包括其对应的Github仓库中的结果，可能与本仓库方法生成的结果不完全相同，但这些结果不应存在最终结论上的显著差异。建议使用此仓库中的最新版本方法。
 
 ## 安装
 ### 准备conda
@@ -39,13 +37,8 @@ conda env create -f environment.yml
 ```bash
 conda activate dms-pipeline
 ```
-### 安装其他依赖项
 
-我们将使用`pip`安装一些Anaconda未分发的Python依赖。这些包列在`requirements.txt`中。
-
-```bash
-pip install -r requirements.txt
-```
+接下来从官方仓库安装minimap2（https://github.com/lh3/minimap2?tab=readme-ov-file#install），确保minimap2的二进制文件在您的环境中可以直接访问。推荐将官方提供的编译好的`minimap2`可执行文件通过`ln`链接到`dms-pipeline`环境中的`$CONDA_PREFIX/bin`目录下。
 
 ### 编译C/C++代码（可选）
 
