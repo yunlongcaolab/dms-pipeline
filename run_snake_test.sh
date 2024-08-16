@@ -13,6 +13,8 @@ snakefile=$workdir/Snakefile
 
 slurm_script=$workdir/slurm_test/slurm_submit.$timestamp.sh
 
+mkdir -p $workdir/slurm_test
+
 if [ ! -f $config ]; then
     echo "Config file not found!"
     exit 1
