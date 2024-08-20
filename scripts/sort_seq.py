@@ -4,13 +4,11 @@ import os
 from scipy.stats import norm, CensoredData
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
-from typing import Optional
-
 
 def _fit_log_normal(
     data_bins: dict[str, int],
     bins: dict[str, dict[str, float]],
-    count_coef: Optional[int] = None,
+    count_coef: int | None = None,
 ) -> tuple[str, float, float]:
     """Fit normal distribution to the log-transformed data.
 
