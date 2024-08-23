@@ -35,6 +35,7 @@ def filter_expr_bind(
     keep_missing: bool,
     filter_on_variant: bool,
     filter_on_single: bool,
+    merge_variant: bool,
     log_handle: Optional[TextIO] = sys.stdout,
 ) -> pd.DataFrame:
 
@@ -150,8 +151,12 @@ def filter_expr_bind(
                 sys.stderr.write(f"No filter files. Skip {prop} variant filter.\n")
                 continue
 
+            var_filt_df = pd.concat(var_filt_df_merge, ignore_index=True)
+            if merge_variant:
+                var_filt_df['barcode'] = var_filt_df['aa_substitutions']
+
             var_filt_df = (
-                pd.concat(var_filt_df_merge, ignore_index=True)
+                var_filt_df
                 .groupby("barcode")[prop]
                 .mean()
                 .reset_index()
@@ -439,21 +444,11 @@ output_dir = config_output / f"escape_calc/{batch}/{sample}"
 log_handle = sys.stdout
 
 # calculate escape enrichment ratio
-ncounts_ref = ref_count["count"].sum().item()
-ncounts_escape = sample_count["count"].sum().item()
-
-_stat["ncounts_ref"] = ncounts_ref
-_stat["detected_barcodes"] = len(sample_count.query("count > 0"))
-_stat["ncounts_escape"] = ncounts_escape
 
 df = (
     ref_count.merge(sample_count[["barcode", "count"]], on="barcode", how="left")
     .rename(columns={"count_x": "ref_count", "count_y": "sample_count"})
     .fillna(0)
-    .assign(
-        escape_score=lambda x: (x.sample_count / ncounts_escape)
-        / (x.ref_count / ncounts_ref)
-    )
 )
 
 min_ref_count = _info["min_ref_count"]
@@ -468,10 +463,31 @@ df = (
         ["barcode", "aa_substitutions", "n_aa_substitutions", "variant_call_support"]
     ]
     .merge(df, on="barcode", how="inner")
-    .query(
-        "ref_count > @min_ref_count and escape_score >= 0 and variant_call_support >= @min_variant_support"
-    )
+    .query("variant_call_support >= @min_variant_support")
 )
+
+if snakemake.config['merge_variant']:
+    df = df.groupby('aa_substitutions').agg({
+        "n_aa_substitutions": "first",
+        "ref_count": "sum",
+        "sample_count": "sum",
+    }).reset_index().assign(barcode = lambda x: x['aa_substitutions'])
+
+ncounts_ref = df["ref_count"].sum().item()
+ncounts_escape = df["sample_count"].sum().item()
+
+_stat["ncounts_ref"] = ncounts_ref
+_stat["detected_barcodes"] = len(sample_count.query("count > 0"))
+_stat["used_barcodes"] = len(df.query("sample_count > 0"))
+_stat["ncounts_escape"] = ncounts_escape
+
+df = df.assign(
+        escape_score=lambda x: (x.sample_count / ncounts_escape)
+        / (x.ref_count / ncounts_ref)
+    ).query(
+        "ref_count > @min_ref_count and escape_score >= 0"
+    )
+
 df["aa_substitutions"] = df["aa_substitutions"].fillna("")
 df = df.assign(
     variant_class=lambda x: x["aa_substitutions"].map(
@@ -547,6 +563,7 @@ df = filter_expr_bind(
     filter_on_variant=_info["filter_on_variant"],
     filter_on_single=_info["filter_on_single"],
     log_handle=log_handle,
+    merge_variant=snakemake.config['merge_variant'],
 )
 
 df.to_csv(output_dir / "variant_escape_scores.csv", index=False)
