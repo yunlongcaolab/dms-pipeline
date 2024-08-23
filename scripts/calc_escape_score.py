@@ -466,6 +466,8 @@ df = (
     .query("variant_call_support >= @min_variant_support")
 )
 
+df['aa_substitutions'] = df['aa_substitutions'].fillna('')
+
 if snakemake.config['merge_variant']:
     df = df.groupby('aa_substitutions').agg({
         "n_aa_substitutions": "first",
