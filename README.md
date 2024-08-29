@@ -37,6 +37,7 @@ This will build a environment named `dms-pipeline`. Then, activate it
 ```bash
 conda activate dms-pipeline
 ```
+Then you should install the minimap2 binary according to the official instruction in the [minimap2 repo](https://github.com/lh3/minimap2?tab=readme-ov-file#install).
 
 ### Compile C/C++ code (optional)
 

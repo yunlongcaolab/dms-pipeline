@@ -13,8 +13,8 @@ RSV-F:
     return:
     - mutations
     - accuracy
-  query_clip3: 6
-  query_clip5: 6
+  query_clip3: null
+  query_clip5: null
   spacer:
     filter:
       mutation_nt_count: 2

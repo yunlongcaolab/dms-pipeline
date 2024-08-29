@@ -1,16 +1,17 @@
 raw_bc: rawdata_example/barcode_sequencing
 raw_lib: rawdata_example/library_sequencing
 sample_info_bc: rawdata_example/sample_info_bc
-
 target_ref: reference/target_ref
 wt_seqs: reference/wt_seqs # directory for the wt_seqs files, default: target_ref/../wt_seqs
-
 output: output_example # directory to save all the output files
 
 batches: all # specify the batch names to process, or 'all' to process all batches, split by ','
 
 fq_suffix: '*q.gz' # define the pattern of fastq files that will be automatically detected in the NGS raw data directory
 R2_pattern: '((_2)|(_R2))\.f(ast)?q\.gz' # define the pattern of R2 fastq files, which will be excluded from the fastq detection
+
+merge_variant: true # merge variants with the same mutations but different barcodes
+cpu_per_task: 8 # for tasks that support multi-processing, specify the number of CPUs to use
 
 barcode_count:
   lowq: 20  # Minimum sequencing quality required.
@@ -35,7 +36,7 @@ calc_escape_scores:
 
   epistasis: dms_variants # dms_variants | dms_variants_linear | sigmoid
   
-  QC: # threshold for escape profile quality filters
+  QC: # threshold for escape profile quality filters, use "max_" or "min_" prefix with fields in the escape stat YAML files
     max_WT_enrichment: 0.3
   
 libinfo:
@@ -58,27 +59,23 @@ libinfo:
   RSV-F-Full-lib1:
     target: RSV-F-Full
 
-ccs_align:
-  cpu_per_task: 8
-
 library_merge: # define merged libraries
   RSV-F:
     RSV-F-UP-merged:
       - RSV-F-lib1
       - RSV-F-lib2
 
-exclude_antibody_names: # The following antibody names will be ignored while calculating the escape scores
-  - 'None'
-  - 'none'
-  - ''
-  - 'empty'
-  - 'Empty'
+default_libinfo:
+  ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
+  bclen: 26
+  min_variant: # default thresholds
+    delta_ML_meanF: -1.2
+  min_single: # default thresholds
+    expr_avg: -1.2
 
-sample_name_replace: # The following characters are not allowed and will be replaced by a hyphen
-  '/': '-'
-  ' ': '-'
-  '.': '-'
 
+# the following fields usually do not need to be changed
+default_template: reference/target_ref/default_template.txt
 parse_specs: 
   default:
     query_clip5: null
@@ -107,13 +104,13 @@ parse_specs:
         clip3: 3
         mutation_nt_count: 1
         mutation_op_count: null
-
-default_template: reference/target_ref/default_template.txt
-
-default_libinfo:
-  ref_numbering_seq: reference/wt_seqs/WT_RSV_A2_ref.fasta
-  bclen: 26
-  min_variant: # default values
-    delta_ML_meanF: -1.2
-  min_single: # default values
-    expr_avg: -1.2
+exclude_antibody_names: # The following antibody names will be ignored while calculating the escape scores
+  - 'None'
+  - 'none'
+  - ''
+  - 'empty'
+  - 'Empty'
+sample_name_replace: # The following characters are not allowed and will be replaced by a hyphen
+  '/': '-'
+  ' ': '-'
+  '.': '-'

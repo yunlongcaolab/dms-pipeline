@@ -3,17 +3,18 @@ channels:
  - conda-forge
  - bioconda
 dependencies:
- - biopython
- - numpy
+ - python=3.12
+ - biopython>=1.83
+ - numpy>=2.0
  - pandas
  - pyyaml
  - scipy
  - altair-all
- - minimap2
  - samtools
- - snakemake
- - snakemake-executor-plugin-slurm # if you need to run on slurm
- - snakemake-executor-plugin-cluster-generic # if you need to run on a generic cluster, or your slurm sacct is not available
+ - jax=0.4.31
+ - optax
+ - snakemake>=8
+ - snakemake-executor-plugin-cluster-generic
  - pip:
    - alignparse
    - binarymap

@@ -27,6 +27,7 @@ rule all:
     input:
         os.path.join(config['output'], "barcode_count_stat.csv"),
         expand(os.path.join(config['output'], "escape_summary/{batch}/QCstat.pdf"), batch=TASKS['escape_calc'].keys()),
+        [os.path.join(config['output'], f"sort_seq/{batch}/{library}/variant_scores.csv") for batch in TASKS['sort_seq'] for library in TASKS['sort_seq'][batch]]
 
 targets = os.listdir(config['raw_lib'])
 tables = []
@@ -69,10 +70,10 @@ rule ccs_align:
     resources:
         stdout = lambda wc: os.path.join(config['output'], f"logs/ccs_align/{wc.target}/{wc.library}_stdout.txt"),
         stderr = lambda wc: os.path.join(config['output'], f"logs/ccs_align/{wc.target}/{wc.library}_stderr.txt"),
-        cpu_per_task = config['ccs_align']['cpu_per_task']
+        cpu_per_task = config['cpu_per_task']
     shell:
         f"mkdir -p {os.path.join(config['output'], 'library_tables/{wildcards.target}/{wildcards.library}')} && "
-        f"minimap2 -a -A5 -B7 -O16 -E2 --end-bonus=23 --secondary=no --cs -t {config['ccs_align']['cpu_per_task']} {{input.ref}} {{input.reads}} | samtools view -bS > {{output}}"
+        f"minimap2 -a -A5 -B7 -O16 -E2 --end-bonus=23 --secondary=no --cs -t {config['cpu_per_task']} {{input.ref}} {{input.reads}} | samtools view -bS > {{output}}"
 
 rule library_table:
     input:
@@ -247,3 +248,26 @@ rule escape_batch_plot:
         stderr = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stderr.txt")
     script:
         f"{config['pipeline']}/scripts/escape_batch_plot.py"
+
+rule all_sort_seq:
+    input:
+        [os.path.join(config['output'], f"sort_seq/{batch}/{library}/variant_scores.csv") for batch in TASKS['sort_seq'] for library in TASKS['sort_seq'][batch]]
+        # [os.path.join(config['output'], f"sort_seq/{batch}/{library}/single_mut_scores.csv") for batch in TASKS['sort_seq'] for library in TASKS['sort_seq'][batch]]
+
+rule sort_seq:
+    input:
+        lambda wc: ([
+            os.path.join(config['output'], f'barcode_count/{bin_info["sample"]}/counts.csv') for bin_info in TASKS['sort_seq'][wc.batch][wc.library].values()
+        ])
+    output:
+        variant = os.path.join(config['output'], 'sort_seq/{batch}/{library}/variant_scores.csv'),
+    params:
+        bins = lambda wc: TASKS['sort_seq'][wc.batch][wc.library],
+        table = lambda wc: os.path.join(config['output'], 'library_tables', config['libinfo'][wc.library]['target'], wc.library, 'variant_table.csv')
+    resources:
+        stdout = lambda wc: os.path.join(config['output'], f"logs/sort_seq/{wc.batch}/{wc.library}/stdout.txt"),
+        stderr = lambda wc: os.path.join(config['output'], f"logs/sort_seq/{wc.batch}/{wc.library}/stderr.txt"),
+        cpu_per_task = config['cpu_per_task']
+    script:
+        f"{config['pipeline']}/scripts/sort_seq.py"
+
