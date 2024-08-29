@@ -270,3 +270,4 @@ rule sort_seq:
         cpu_per_task = config['cpu_per_task']
     script:
         f"{config['pipeline']}/scripts/sort_seq.py"
+
