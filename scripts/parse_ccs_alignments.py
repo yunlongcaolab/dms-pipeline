@@ -62,6 +62,7 @@ aligned_df = (
       .rename(columns={'barcode_sequence': 'barcode'})
 )
 
+
 filtered_df = (
     filtered[primary_target].assign(library = snakemake.wildcards.library)
         .groupby(['library', 'filter_reason'])
@@ -83,7 +84,10 @@ readstats = (
             valid=lambda x: x['category_all_targets'] == 'aligned')
     )
 aligned_df.to_csv(processed_ccs, index=False)
-filtered_df.to_csv(output_dir / 'filtered_ccs.csv.gz', index=False)
+
+filtered[primary_target].assign(library = snakemake.wildcards.library).rename(columns={'barcode_sequence': 'barcode'}).to_csv(output_dir / 'filtered_ccs.csv.gz', index=False)
+filtered_df.to_csv(output_dir / 'filter_stat.csv', index=False)
+
 readstats.to_csv(output_dir / 'readstats.csv', index=False)
 
 output_stat_info['aligned_ccs'] = len(aligned_df)

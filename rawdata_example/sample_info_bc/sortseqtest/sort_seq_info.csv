@@ -1,0 +1,9 @@
+sample,bin,library,num_cells,min_F,max_F
+S15-bin1-RSV-F-up-2mut-lib1m,bin1,RSV-F-lib1,6250000,1,749
+S16-bin2-RSV-F-up-2mut-lib1m,bin2,RSV-F-lib1,3945000,749,7349
+S17-bin3-RSV-F-up-2mut-lib1m,bin3,RSV-F-lib1,4410000,7349,14755
+S18-bin4-RSV-F-up-2mut-lib1m,bin4,RSV-F-lib1,3840000,14755,226009
+S19-bin1-RSV-F-up-2mut-lib2m,bin1,RSV-F-lib2,3705000,1,760
+S20-bin2-RSV-F-up-2mut-lib2m,bin2,RSV-F-lib2,3930000,760,7349
+S21-bin3-RSV-F-up-2mut-lib2m,bin3,RSV-F-lib2,4155000,7349,14755
+S22-bin4-RSV-F-up-2mut-lib2m,bin4,RSV-F-lib2,3870000,14755,226009
