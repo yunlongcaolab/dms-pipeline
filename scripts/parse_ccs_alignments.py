@@ -54,8 +54,6 @@ for variable in ['length', 'passes', 'accuracy']:
 
 readstats, aligned, filtered = target.parse_alignment(snakemake.input.aln)
 
-processed_ccs = output_dir / 'processed_ccs.csv.gz'
-
 aligned_df = (
     aligned[primary_target].assign(library = snakemake.wildcards.library)
       .drop(columns=['query_clip5', 'query_clip3'])
@@ -83,9 +81,12 @@ readstats = (
             target=lambda x: x['category'].str.split(None, n=1).str[1],
             valid=lambda x: x['category_all_targets'] == 'aligned')
     )
-aligned_df.to_csv(processed_ccs, index=False)
+aligned_df.to_csv(output_dir / 'processed_ccs.csv.gz', index=False)
 
-filtered[primary_target].assign(library = snakemake.wildcards.library).rename(columns={'barcode_sequence': 'barcode'}).to_csv(output_dir / 'filtered_ccs.csv.gz', index=False)
+filtered[primary_target].assign(
+    library = snakemake.wildcards.library).rename(
+        columns={'barcode_sequence': 'barcode'}).to_csv(
+            output_dir / 'filtered_ccs.csv.gz', index=False)
 filtered_df.to_csv(output_dir / 'filter_stat.csv', index=False)
 
 readstats.to_csv(output_dir / 'readstats.csv', index=False)
@@ -202,10 +203,7 @@ save_as_pdf_pages(plots, filename=output_dir / f'{snakemake.wildcards.library}_p
 ##########################
 plots = []
 
-processed_ccs = aligned_df.assign(
-    target = primary_target,
-    library = snakemake.wildcards.library,
-)
+processed_ccs = aligned_df.assign(target = primary_target)
 nlibs = processed_ccs['library'].nunique()
 ntargets = processed_ccs['target'].nunique()
 
@@ -416,6 +414,7 @@ plots.append(p)
 
 output_stat_info['consensus_barcodes'] = len(consensus)
 
+consensus.query('number_of_indels > 0').to_csv(output_dir / 'consensus_with_indels.csv.gz', index=False)
 consensus = consensus.query('number_of_indels == 0')
 
 output_stat_info['consensus_barcodes_remove_indels'] = len(consensus)
