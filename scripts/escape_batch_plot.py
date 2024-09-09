@@ -9,7 +9,6 @@ def site_plot(data: pd.DataFrame, use_col: str) -> alt.Chart:
 
     sys.stdout.write(f"Plotting {use_col}...\n")
 
-    data['sample'] = data['sample'] + ' (' + data['antibody'] + ' ' + data['library'] + ')'
 
     base = alt.Chart(data).encode(
             x=alt.X("site_number:Q", title="Site"),
@@ -62,6 +61,8 @@ samples = pd.read_csv(snakemake.input[1])
 scores = pd.read_csv(snakemake.input[0]).merge(
     samples[['sample', 'library', 'pass_QC']], on='sample', how='left'
 )
+
+scores['sample'] = scores['sample'] + ' (' + scores['antibody'] + ' ' + scores['library'] + ')'
 
 pass_df = scores[scores['pass_QC'] == True]
 fail_df = scores[scores['pass_QC'] == False]

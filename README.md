@@ -39,6 +39,13 @@ conda activate dms-pipeline
 ```
 Then you should install the minimap2 binary according to the official instruction in the [minimap2 repo](https://github.com/lh3/minimap2?tab=readme-ov-file#install).
 
+For generate the plots, you need to install some R packages. You can install them by running the following command:
+
+```bash
+Rscript -e 'install.packages("BiocManager")'
+Rscript -e 'BiocManager::install(c("ggplot2", "tidyverse", "ggrastr"))'
+```
+
 ### Compile C/C++ code (optional)
 
 A minor part of this pipeline is written in C/C++ for performance. These code provides optional features which are not necessary for basic analyses. If you need them, enter the `scripts` directory and compile them. Currently, the C/C++ code is very simple so there should not be complex issues on dependencies.
