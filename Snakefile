@@ -130,7 +130,8 @@ if 'library_merge' in config:
 rule barcode_count:
     input:
         reads = lambda wildcards: TASKS['barcode_count'][wildcards.sample]["fastq_files"],
-        table = lambda wildcards: os.path.join(config['output'], 'library_tables', config['libinfo'][TASKS['barcode_count'][wildcards.sample]['library']]['target'], TASKS['barcode_count'][wildcards.sample]['library'], 'variant_table.csv')
+        table = lambda wildcards: os.path.join(config['output'], 'library_tables', config['libinfo'][TASKS['barcode_count'][wildcards.sample]['library']]['target'], TASKS['barcode_count'][wildcards.sample]['library'], 'variant_table.csv'),
+        script = os.path.join(config['pipeline'], 'scripts', 'barcode_count.py')
     output:
         os.path.join(config['output'], "barcode_count/{sample}/counts.csv"),
         os.path.join(config['output'], "barcode_count/{sample}/barcode_count_info.yaml")
@@ -146,7 +147,7 @@ rule barcode_count:
     wildcard_constraints:
         sample='|'.join(TASKS["barcode_count"].keys())
     shell:
-        f'''python {config['pipeline']}/scripts/barcode_count.py --sample={{wildcards.sample}} --batch={{params.batch}} --library={{params.library}} \
+        f'''python {{input.script}} --sample={{wildcards.sample}} --batch={{params.batch}} --library={{params.library}} \
                                        -i {{params.fastq_files}} \
                                        -o {os.path.join(config['output'], 'barcode_count/{wildcards.sample}')} \
                                        -b {{params.bclen}} \

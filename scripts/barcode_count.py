@@ -126,6 +126,14 @@ def count_variants(variants, lib, fastq_data, bclen, max_dist, min_dist_diff, al
     
     return counts, fates
 
+def get_single_mut(vars):
+    muts = set()
+
+    for var in vars:
+        for mut in var.split(' '):
+            muts.add(mut)
+    
+    return muts
 
 def main():
     args = parser.parse_args()
@@ -149,6 +157,11 @@ def main():
                                    bclen=args.bclen, 
                                    max_dist=args.max_distance, min_dist_diff=args.min_dist_diff, 
                                    allowed_lowq=args.allowed_lowq, lowq=args.lowq)
+
+    counts_var = counts.merge(variants, how='left', on='barcode')
+    fates['detected mutations (single)'] = len(counts_var.query("n_aa_substitutions == 1")["aa_substitutions"].unique())
+    fates['detected mutations (any)'] = len(get_single_mut(counts_var["aa_substitutions"].fillna('').to_list()))
+
     sys.stdout.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+' | Done.\n')
     
     counts.to_csv(os.path.join(output_dir, 'counts.csv'), index=None)
