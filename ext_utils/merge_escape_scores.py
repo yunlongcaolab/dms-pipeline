@@ -9,7 +9,7 @@ parser.add_argument("--input_dir", "-i", help="input directory")
 parser.add_argument("--output", "-o", help="output directory")
 parser.add_argument("--variant", action='store_true', help="use variant scores instead of single scores [default: False]")
 parser.add_argument("--include_failed", action='store_true', help="include failed samples [default: False]")
-
+parser.add_argument("--specific_ab", default=None)
 
 def main(args):
     # output args
@@ -34,6 +34,8 @@ def main(args):
     sys.stderr.write(f"Processing {len(files)} files\n")
 
     for file in files:
+        print(f"Searching {file} ...", flush=True)
+
         stat = yaml.safe_load(open(file.parent / 'calc_escape_stat.yaml'))
         info = yaml.safe_load(open(file.parent / 'calc_escape_info.yaml'))
 
@@ -41,6 +43,9 @@ def main(args):
         batch_sample = file.parent.name
         
         if not stat['pass_QC'] and not args.include_failed:
+            continue
+        
+        if args.specific_ab is not None and stat['antibody'] != args.specific_ab:
             continue
 
         df.append(
