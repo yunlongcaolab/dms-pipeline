@@ -341,7 +341,9 @@ def generate_sequence_numbering(
             offset = 0
             cur = aln.indices[0, i]
             label_sites[aln.indices[1, i]] = str(cur + 1)
-    return label_sites
+    for i in range(0, aln.indices[1, 0]):
+        label_sites[i] = f'{aln[0, 0]}-{aln.indices[1, 0] - i}'
+    return aln, label_sites
 
 
 def dms_quality_filter(
@@ -628,8 +630,8 @@ if ref_numbering_seq is None:
     label_sites = [str(i + seq_offset) for i in range(len(wt_seq))]
 else:
     log_handle.write(f"\nAlignment for numbering.\n")
-    label_sites = generate_sequence_numbering(ref_numbering_seq, wt_seq, mode="local")
-
+    aln, label_sites = generate_sequence_numbering(ref_numbering_seq, wt_seq, mode="local")
+    log_handle.write(f"{aln}")
 
 effects_df, site_effects_df = calc_epistatsis_model(
     variant_escape_scores=df_filter,
