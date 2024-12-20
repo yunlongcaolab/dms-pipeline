@@ -28,7 +28,7 @@ def _fit_log_normal(
 
     for bin, count in data_bins.items():
         left, right = bins[bin]["left"], bins[bin]["right"]
-        left = -np.inf if left <= 0 else np.log(left)
+        left = 0 if left <= 0 else np.log(left)
         right = np.log(right)
 
         censored_data += int(count * count_coef + 0.5) * [[left, right]]
