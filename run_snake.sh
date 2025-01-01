@@ -2,7 +2,7 @@
 
 set -e
 
-partitions=cpu1,cpu2,sugon,hygon
+partitions=cpu1,cpu2,cpu3,hygon
 
 pipeline=$(pwd)
 workdir=/lustre/grp/cyllab/share/DMS/$1
@@ -14,6 +14,9 @@ timestamp=$(date +%Y%m%d%H%M%S)
 config=$workdir/config.yaml
 snakefile=$workdir/Snakefile.$timestamp
 
+num_proc_tasks=8
+
+slurm_script_tasks=$workdir/slurm_tasks.$timestamp.sh
 slurm_script=$workdir/slurm_submit.$timestamp.sh
 
 if [ -z $1 ]; then
@@ -37,13 +40,24 @@ mkdir -p $workdir/.old.files
 
 ls $workdir | grep ^Snakefile | xargs -I {} mv $workdir/{} $workdir/.old.files/
 ls $workdir | grep ^slurm_submit | xargs -I {} mv $workdir/{} $workdir/.old.files/
+ls $workdir | grep ^slurm_tasks | xargs -I {} mv $workdir/{} $workdir/.old.files/
 
 cp Snakefile $snakefile
 
 echo "Copied Snakefile: $snakefile"
 
-# snakemake --snakefile $snakefile --configfile $config --cluster "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048 # for snakemake v7
+cat << EEOF > $slurm_script_tasks
+#!/bin/bash
+#SBATCH -c $num_proc_tasks
+#SBATCH --mem=32g
+#SBATCH --partition=$partitions
+#SBATCH -o $workdir/slurm_test/slurm_tasks_%j_$timestamp.o.txt
+#SBATCH -e $workdir/slurm_test/slurm_tasks_%j_$timestamp.e.txt
+#SBATCH -D $workdir
 
+set -e
+
+python $(pwd)/scripts/sample_info_clean.py --config=$config --workdir=$workdir
 slurm_cmd="sbatch --partition=$partitions -c {resources.cpu_per_task} --mem={resources.mem_mb} -J {rule}_{wildcards} --time=2400 -D $workdir -o {resources.stdout} -e {resources.stderr}" 
 
 cat << EOF > $slurm_script
@@ -56,10 +70,13 @@ cat << EOF > $slurm_script
 #SBATCH -e $workdir/slurm_submit_$timestamp.e.txt
 #SBATCH -D $workdir
 
-python $(pwd)/scripts/sample_info_clean.py --config=$config --workdir=$workdir
 
-snakemake $rule $other --snakefile $snakefile --config pipeline=$pipeline --configfile $config --executor cluster-generic --cluster-generic-submit-cmd "$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048
+snakemake $rule $other --snakefile $snakefile --config pipeline=$pipeline --configfile $config --executor cluster-generic --cluster-generic-submit-cmd "\$slurm_cmd" -j unlimited --default-resources cpu_per_task=1 mem_mb=2048
 EOF
 
 sbatch $slurm_script
 echo "Submitted slurm job: $slurm_script"
+
+EEOF
+
+sbatch $slurm_script_tasks
