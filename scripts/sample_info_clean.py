@@ -9,37 +9,36 @@ from sort_seq import load_expression_info
 
 from concurrent.futures import ProcessPoolExecutor
 import logging
+import fnmatch, re
 
-def get_fq_files(raw, batch, sample, suffix, R2_pattern, is_cleaned):
+def get_fq_files(all_candidate_files, batch, sample, suffix, R2_pattern, is_cleaned):
     logger = logging.getLogger(__name__)
-    # all_candidate_files = [str(x) for x in (raw / batch).rglob(f"*{sample}*" + suffix if suffix[0] != "*" else suffix[1:])]
-    fq_files = [str(x) for x in (raw / batch).rglob(f"{sample}." + suffix)]
 
-    if len(fq_files) == 0:
-        fq_files = [str(x) for x in (raw / batch).rglob(f"{sample}" + suffix)]
-
-    if len(fq_files) == 0:
-        fq_files = [str(x) for x in (raw / batch).rglob(f"*{sample}_" + suffix)]
-
-    if len(fq_files) == 0:
-        fq_files = [str(x) for x in (raw / batch).rglob(f"*{sample}" + suffix)]
+    patterns = [
+        f"{sample}."+suffix,
+        f"{sample}_"+suffix,
+        f"{sample}"+suffix,
+        f"*{sample}."+suffix,
+        f"*{sample}_"+suffix,
+        f"*{sample}"+suffix,
+    ] # search pattern from all_candidate_files until one file is found
+    for pattern in patterns:
+        regex = re.compile(fnmatch.translate(pattern))
+        fq_files = [x for x in all_candidate_files if regex.match(Path(x).name)]
+        if len(fq_files) > 0:
+            break
 
     if is_cleaned:
         fq_files = [x for x in fq_files if not '/CleanData/' in x]
 
     if len(fq_files) == 0:
         logger.warning(
-            f"Warning: {batch} - {sample}. FASTQ not found for pattern '*{sample}'. Try alternative path."
+            f"Warning: {batch} - {sample}. FASTQ not found for pattern '*{sample}{suffix}'. Try alternative path."
         )
-        fq_files = [
-            str(x)
-            for x in (raw / batch).rglob(
-                os.path.join(
-                    f"*{sample}*",
-                    suffix if suffix[0] == "*" else "*" + suffix,
-                )
-            )
-        ]
+        alt_pattern = re.compile(
+            fnmatch.translate(os.path.join(f"*{sample}*", suffix if suffix[0] == "*" else "*" + suffix))
+        )
+        fq_files = [x for x in all_candidate_files if alt_pattern.match(x)]
 
     # if QC exist, remove all non-QC files
     for x in fq_files:
@@ -106,10 +105,11 @@ def parse_batch(sample_info, raw, batch, necessary_columns, sample_name_replace,
     if "fastq_files" not in _df.columns:  # try to find fq files
         is_cleaned = (raw / batch / "merge_fastq.py").exists()
         all_fq_files = []
+        all_candidate_files = [str(x) for x in (raw / batch).rglob(suffix if suffix[0] == "*" else "*" + suffix) if not '.low.f' in str(x)]
         for sample in _df["sample"]:
             for k, v in sample_name_replace.items():
                 sample = sample.replace(k, v)
-            fq_files = get_fq_files(raw, batch, sample, suffix, R2_pattern, is_cleaned)
+            fq_files = get_fq_files(all_candidate_files, batch, sample, suffix, R2_pattern, is_cleaned)
             all_fq_files.append(fq_files)
         _df["fastq_files"] = all_fq_files
     
