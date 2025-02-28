@@ -242,7 +242,7 @@ rule escape_batch_plot:
         os.path.join(config['output'], "escape_summary/{batch}/stat.csv"),
         os.path.join(config['output'], "barcode_count_stat.csv")
     output:
-        expand(os.path.join(config['output'], "escape_summary/{{batch}}/{status}/site_escape_{agg}_{model}.pdf"), agg=['total', 'mean'], model=['model', 'single'], status=['pass', 'fail']),
+        expand(os.path.join(config['output'], "escape_summary/{{batch}}/{status}/site_escape_{agg}_{model}."+('png' if config.get('save_png', False) else 'pdf')), agg=['total', 'mean'], model=['model', 'single'], status=['pass', 'fail']),
         os.path.join(config['output'], "escape_summary/{batch}/QCstat.pdf")
     resources:
         stdout = lambda wc: os.path.join(config["output"], f"logs/escape_summary/{wc.batch}/plot_stdout.txt"),

@@ -411,7 +411,7 @@ _info = {
 
 _stat = {}
 
-for info_item in ["library", "antibody", "sample"]:
+for info_item in ["library", "antigen","antibody", "sample"]:
     _stat[info_item] = _info[info_item]
 
 libinfo = snakemake.config["libinfo"][_info["library"]]
