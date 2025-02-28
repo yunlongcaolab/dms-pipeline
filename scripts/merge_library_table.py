@@ -43,8 +43,8 @@ table = df.assign(library=merge_name).query('barcode not in @ambiguous_barcodes'
     'n_aa_substitutions': 'max'
 }).reset_index()
 
-print("Resulting Complexity:", len(df_out))
-output_stat_info['valid_barcodes_after_merging'] = len(df_out)
+print("Num barcodes before filtering:", len(df_out))
+output_stat_info['valid_barcodes_after_merging'] = len(table)
 
 table.to_csv(snakemake.output[0], index=False)
 

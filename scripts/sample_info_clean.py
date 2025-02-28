@@ -10,6 +10,69 @@ from sort_seq import load_expression_info
 from concurrent.futures import ProcessPoolExecutor
 import logging
 
+def get_fq_files(raw, batch, sample, suffix, R2_pattern, is_cleaned):
+    logger = logging.getLogger(__name__)
+    # all_candidate_files = [str(x) for x in (raw / batch).rglob(f"*{sample}*" + suffix if suffix[0] != "*" else suffix[1:])]
+    fq_files = [str(x) for x in (raw / batch).rglob(f"{sample}." + suffix)]
+
+    if len(fq_files) == 0:
+        fq_files = [str(x) for x in (raw / batch).rglob(f"{sample}" + suffix)]
+
+    if len(fq_files) == 0:
+        fq_files = [str(x) for x in (raw / batch).rglob(f"*{sample}_" + suffix)]
+
+    if len(fq_files) == 0:
+        fq_files = [str(x) for x in (raw / batch).rglob(f"*{sample}" + suffix)]
+
+    if is_cleaned:
+        fq_files = [x for x in fq_files if not '/CleanData/' in x]
+
+    if len(fq_files) == 0:
+        logger.warning(
+            f"Warning: {batch} - {sample}. FASTQ not found for pattern '*{sample}'. Try alternative path."
+        )
+        fq_files = [
+            str(x)
+            for x in (raw / batch).rglob(
+                os.path.join(
+                    f"*{sample}*",
+                    suffix if suffix[0] == "*" else "*" + suffix,
+                )
+            )
+        ]
+
+    # if QC exist, remove all non-QC files
+    for x in fq_files:
+        if '/QC/' in x:
+            fq_files = [x for x in fq_files if '/QC/' in x]
+            break
+
+    for x in fq_files:
+        if '/Cleandata/' in x:
+            fq_files = [x for x in fq_files if '/Cleandata/' in x]
+            break
+
+    if len(fq_files) == 0:
+        logger.warning(
+            f"Warning: {batch} - {sample}. FASTQ not found in alternative path. Skipped."
+        )
+        return ""
+    elif "," in "".join(fq_files):
+        logger.error(
+            f"Error: {batch} - {sample}. Comma in fastq file path."
+        )
+        raise RuntimeError(f"Comma in fastq file path: {batch} - {sample}")
+    elif len(fq_files) > 1:
+        logger.warning(
+            f"Warning: {batch} - {sample}. Multiple FASTQ found. {','.join(fq_files)}. Try removing R2 or redundant files."
+        )
+        fq_files = [x for x in fq_files if not R2_pattern.search(x)]
+
+        logger.info(f"    {len(fq_files)} files found after removing. {','.join(fq_files)}.")
+        return ",".join(fq_files)
+    else:
+        return fq_files[0]
+
 def parse_batch(sample_info, raw, batch, necessary_columns, sample_name_replace, exclude_antibody_names, libraries, suffix, R2_pattern):
     logger = logging.getLogger(__name__)
     csvfile = sample_info / batch / "sample_info.csv"
@@ -32,7 +95,7 @@ def parse_batch(sample_info, raw, batch, necessary_columns, sample_name_replace,
 
     if len(_df) == 0:
         sys.stderr.write(f"Warning: {batch} - {csvfile}. No samples found.")
-        return None
+        return None, None
 
     if not necessary_columns.issubset(_df.columns):
         logger.error(
@@ -41,45 +104,13 @@ def parse_batch(sample_info, raw, batch, necessary_columns, sample_name_replace,
         raise RuntimeError(f"Missing necessary columns in sample info.")
 
     if "fastq_files" not in _df.columns:  # try to find fq files
+        is_cleaned = (raw / batch / "merge_fastq.py").exists()
         all_fq_files = []
         for sample in _df["sample"]:
             for k, v in sample_name_replace.items():
                 sample = sample.replace(k, v)
-            fq_files = [str(x) for x in (raw / batch).rglob(f"*{sample}" + suffix)]
-            if len(fq_files) == 0:
-                logger.warning(
-                    f"Warning: {batch} - {sample}. FASTQ not found. Try alternative path."
-                )
-                fq_files = [
-                    str(x)
-                    for x in (raw / batch).rglob(
-                        os.path.join(
-                            f"*{sample}*",
-                            suffix if suffix[0] == "*" else "*" + suffix,
-                        )
-                    )
-                ]
-
-            if len(fq_files) == 0:
-                logger.warning(
-                    f"Warning: {batch} - {sample}. FASTQ not found in alternative path. Skipped."
-                )
-                all_fq_files.append("")
-            elif "," in "".join(fq_files):
-                logger.error(
-                    f"Error: {batch} - {sample}. Comma in fastq file path."
-                )
-                raise RuntimeError(f"Comma in fastq file path: {batch} - {sample}")
-            elif len(fq_files) > 1:
-                logger.warning(
-                    f"Warning: {batch} - {sample}. Multiple FASTQ found. {','.join(fq_files)}. Try removing R2 files."
-                )
-                fq_files = [x for x in fq_files if not R2_pattern.search(x)]
-
-                logger.info(f"    {len(fq_files)} files found after removing. {','.join(fq_files)}.")
-                all_fq_files.append(",".join(fq_files))
-            else:
-                all_fq_files.append(fq_files[0])
+            fq_files = get_fq_files(raw, batch, sample, suffix, R2_pattern, is_cleaned)
+            all_fq_files.append(fq_files)
         _df["fastq_files"] = all_fq_files
     
     # for col in ['description', 'AbConc']: # optional columns

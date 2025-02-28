@@ -82,4 +82,7 @@ for f in snakemake.output[:-1]:
         use_col=f"site_{_agg}_{_model}_escape"
     )
 
-    chart.save(f)
+    if target.suffix == '.png':
+        chart.save(f, ppi=150)
+    else:
+        chart.save(f)
