@@ -587,7 +587,7 @@ output_stat_info['n_detected_single_mutations'] = len(detected_single_muts)
 
 missing_muts = []
 for site, ref_aa in wildtype_aa.items():
-    for mut_aa in 'ACDEFGHIKLMNPQRSTVWY':
+    for mut_aa in 'ACDEFGHIKLMNPQRSTVWY*':
         if mut_aa == ref_aa:
             continue
         mut = f'{ref_aa}{site}{mut_aa}'
