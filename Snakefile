@@ -27,6 +27,7 @@ rule all:
     input:
         os.path.join(config['output'], "barcode_count_stat.csv"),
         expand(os.path.join(config['output'], "escape_summary/{batch}/QCstat.pdf"), batch=TASKS['escape_calc'].keys()),
+        expand(os.path.join(config['output'], "barcode_count/{sample}/overrepresented_sequences.txt"), sample=TASKS["barcode_count"].keys()),
         [os.path.join(config['output'], f"sort_seq/{batch}/{library}/variant_scores.csv") for batch in TASKS['sort_seq'] for library in TASKS['sort_seq'][batch]]
 
 targets = os.listdir(config['raw_lib'])
@@ -189,6 +190,29 @@ rule barcode_count_stat:
         stderr = os.path.join(config["output"], "logs/barcode_count_stat/stderr.txt")
     script:
         f"{config['pipeline']}/scripts/barcode_count_stat.py"
+
+rule fastqc:
+    input:
+        reads = lambda wildcards: TASKS['barcode_count'][wildcards.sample]["fastq_files"]
+    output:
+        os.path.join(config['output'], "barcode_count/{sample}/overrepresented_sequences.txt")
+    resources:
+        stdout = lambda wc: os.path.join(config['output'], f"logs/fastqc/{wc.sample}/stdout.txt"),
+        stderr = lambda wc: os.path.join(config['output'], f"logs/fastqc/{wc.sample}/stderr.txt")
+    params:
+        fastqc_dir = os.path.join(config['output'], "barcode_count/{sample}/fastqc"),
+    wildcard_constraints:
+        sample='|'.join(TASKS["barcode_count"].keys())
+    shell:
+        """
+        shopt -s extglob
+        mkdir -p {params.fastqc_dir} && \
+        fastqc --extract -o {params.fastqc_dir} {input.reads} && \
+        rm -rf {params.fastqc_dir}/*@(_2|_R2|.R2)_fastqc && \
+        awk '/>>Overrepresented sequences/,/>>END_MODULE/' \
+            {params.fastqc_dir}/*_fastqc/fastqc_data.txt | \
+            grep -v ">>" > {output} || true
+        """
 
 rule escape_calc:
     input:
