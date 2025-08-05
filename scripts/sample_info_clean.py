@@ -5,6 +5,7 @@ import argparse
 import time
 
 from pathlib import Path
+import glob
 from sort_seq import load_expression_info
 
 from concurrent.futures import ProcessPoolExecutor
@@ -90,7 +91,9 @@ def parse_batch(sample_info, raw, batch, necessary_columns, sample_name_replace,
         .fillna("")
     )
 
-    print(f"Processing {batch}... Number of samples: {len(_df)}")
+    logger.info(f"Processing {batch}... Number of samples: {len(_df)}")
+    if len(_df) == 0:
+        logger.warning(f'No valid samples in batch {batch}')
 
     if len(_df) == 0:
         sys.stderr.write(f"Warning: {batch} - {csvfile}. No samples found.")
@@ -105,7 +108,8 @@ def parse_batch(sample_info, raw, batch, necessary_columns, sample_name_replace,
     if "fastq_files" not in _df.columns:  # try to find fq files
         is_cleaned = (raw / batch / "merge_fastq.py").exists()
         all_fq_files = []
-        all_candidate_files = [str(x) for x in (raw / batch).rglob(suffix if suffix[0] == "*" else "*" + suffix) if not '.low.f' in str(x)]
+        #all_candidate_files = [str(x) for x in (raw / batch).rglob(suffix if suffix[0] == "*" else "*" + suffix) if not '.low.f' in str(x)]
+        all_candidate_files = [str(x) for x in glob.glob(str(raw/batch/'**'/(suffix if suffix[0] == "*" else "*" + suffix)), recursive=True) if not '.low.f' in str(x)]
         for sample in _df["sample"]:
             for k, v in sample_name_replace.items():
                 sample = sample.replace(k, v)
