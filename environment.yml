@@ -11,8 +11,10 @@ dependencies:
  - scipy
  - altair-all
  - samtools
+ - minimap2
  - jax=0.4.31
  - optax
+ - fastqc
  - snakemake>=8
  - snakemake-executor-plugin-cluster-generic
 #  - r=4.3
