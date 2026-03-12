@@ -276,6 +276,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO, filename=log_file, filemode="w")
 
+    os.makedirs(config["sample_info_bc"], exist_ok=True)
     if "batches" in config and config["batches"] != "all":
         BATCHES = config["batches"].split(",")
     else:

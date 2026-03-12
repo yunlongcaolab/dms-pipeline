@@ -68,13 +68,15 @@ rule ccs_align:
         ref = os.path.join(config['target_ref'], '{target}/{target}.fasta')
     output:
         os.path.join(config['output'], 'library_tables/{target}/{library}/alignments.bam')
+    params:
+        cpu_per_task = config.get('ccs_align',{}).get('cpu_per_task', config['cpu_per_task'])
     resources:
         stdout = lambda wc: os.path.join(config['output'], f"logs/ccs_align/{wc.target}/{wc.library}_stdout.txt"),
         stderr = lambda wc: os.path.join(config['output'], f"logs/ccs_align/{wc.target}/{wc.library}_stderr.txt"),
-        cpu_per_task = config['cpu_per_task']
+        cpu_per_task = config.get('ccs_align',{}).get('cpu_per_task', config['cpu_per_task'])
     shell:
         f"mkdir -p {os.path.join(config['output'], 'library_tables/{wildcards.target}/{wildcards.library}')} && "
-        f"minimap2 -a -A5 -B7 -O16 -E2 --end-bonus=23 --secondary=no --cs -t {config['cpu_per_task']} {{input.ref}} {{input.reads}} | samtools view -bS > {{output}}"
+        f"minimap2 -a -A5 -B7 -O16 -E2 --end-bonus=23 --secondary=no --cs -t {{params.cpu_per_task}} {{input.ref}} {{input.reads}} | samtools view -bS > {{output}}"
 
 rule library_table:
     input:
