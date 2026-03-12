@@ -73,7 +73,8 @@ rule ccs_align:
     resources:
         stdout = lambda wc: os.path.join(config['output'], f"logs/ccs_align/{wc.target}/{wc.library}_stdout.txt"),
         stderr = lambda wc: os.path.join(config['output'], f"logs/ccs_align/{wc.target}/{wc.library}_stderr.txt"),
-        cpu_per_task = config.get('ccs_align',{}).get('cpu_per_task', config['cpu_per_task'])
+        cpu_per_task = config.get('ccs_align',{}).get('cpu_per_task', config['cpu_per_task']),
+        mem_mb = config.get('ccs_align',{}).get('mem_mb', config.get('mem_mb', 16000))
     shell:
         f"mkdir -p {os.path.join(config['output'], 'library_tables/{wildcards.target}/{wildcards.library}')} && "
         f"minimap2 -a -A5 -B7 -O16 -E2 --end-bonus=23 --secondary=no --cs -t {{params.cpu_per_task}} {{input.ref}} {{input.reads}} | samtools view -bS > {{output}}"

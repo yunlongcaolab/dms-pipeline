@@ -99,11 +99,7 @@ SomeProj
 │   ├── batch2
 │   │   └── sample_info.csv
 │   └── ...
-├── PacBio_raw (raw PacBio data)
-│   ├── batch1
-│   ├── batch2
-│   └── ...
-├── library_PacBio (usually link from PacBio_raw)
+├── PacBio_raw
 │   ├── antigen1
 │   │   ├── library1
 │   │   │   ├── library1_run1.fq.gz
@@ -111,7 +107,7 @@ SomeProj
 │   │   └── library2
 │   └── ...
 ├── reference
-│   ├── wt_seqs
+│   ├── wt_seqs (automatically generated from target_ref)
 │   │   ├── antigen1.fasta
 │   │   ├── antigen2.fasta
 │   │   └── ...
@@ -121,9 +117,10 @@ SomeProj
 │   │   │   └── ...
 │   │   └── ...
 │   ├── target_ref
+│   │   ├── default_template.txt
 │   │   ├── antigen1
 │   │   │   ├── plasmid.txt
-│   │   │   └── template.txt
+│   │   │   └── template.txt (optional)
 │   │   └── ...
 │   └── ...
 ├── processed
@@ -138,7 +135,7 @@ dms-pipeline (this repo)
 └── ...
 ```
 
-Now, copy the `config.yaml` file to the `SomeProj` directory and modify the paths and configuration in it.
+Now, copy the `config.yaml` file to the `SomeProj` directory and modify the list of library, paths and configuration in it.
 
 ### Run the pipeline
 
@@ -150,9 +147,9 @@ Check the `run_snake.sh` script and run it to start the pipeline.
 
 Use `all` rule to process all data according to the configuration; use `all_tables` to run the PacBio part only.
 
-It's OK to run the pipeline with other directory structures, as long as you write the `config.yaml` according.
+It's OK to run the pipeline with other directory structures, as long as you write the `config.yaml` accordingly.
 
-By default, the pipeline use slurm to submit jobs. If you are not using slurm, you can modify the `run_snake.sh`.
+By default, the pipeline use slurm to submit jobs. Please check the slurm configuration in `run_snake.sh`. If you are not using slurm, you can also modify the `run_snake.sh`.
 
 ### Downstream analyses
 
@@ -166,8 +163,8 @@ You should properly write HADI config YAML files and run the `scripts/dms_integr
 
 ## TODO
 
-- Include Sort-seq and Tite-seq.
-- Link with HADI.
+- Improve Sort-seq pipeline and include Tite-seq pipeline.
+- Better integration with HADI.
 
 ## Citation
 
