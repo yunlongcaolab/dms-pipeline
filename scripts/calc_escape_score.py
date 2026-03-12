@@ -134,6 +134,9 @@ def filter_expr_bind(
                     continue
                 var_filt_df = pd.read_csv(filt_file)
 
+                if merge_variant:
+                    var_filt_df['barcode'] = var_filt_df['aa_substitutions']
+
                 required_cols = ["barcode", prop]
                 assert set(required_cols).issubset(
                     var_filt_df.columns
@@ -152,8 +155,6 @@ def filter_expr_bind(
                 continue
 
             var_filt_df = pd.concat(var_filt_df_merge, ignore_index=True)
-            if merge_variant:
-                var_filt_df['barcode'] = var_filt_df['aa_substitutions']
 
             var_filt_df = (
                 var_filt_df
