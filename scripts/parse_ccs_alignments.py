@@ -13,7 +13,7 @@ from plotnine.ggplot import save_as_pdf_pages
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import yaml
+import yaml, os
 
 output_dir = Path(snakemake.output[0]).parent
 other_cutoff = 0.02  # group as "other" reasons with <= this frac
@@ -33,7 +33,11 @@ pacbio_runs = pd.DataFrame({
     'fastq': snakemake.input.reads,
 })
 
-ccs_summaries = Summaries(pacbio_runs, report_col = None)
+ccs_summaries = Summaries(
+    pacbio_runs, 
+    report_col = None,
+    ncpus = min(len(pacbio_runs), int(os.environ.get('SLURM_CPUS_PER_TASK', 1)))
+)
 output_stat_info = {}
 
 plots = []

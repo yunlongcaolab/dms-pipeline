@@ -91,6 +91,7 @@ rule library_table:
         os.path.join(config['output'], 'library_tables/{target}/{library}/processed_ccs.csv.gz'),
         os.path.join(config['output'], 'library_tables/{target}/{library}/filtered_ccs.csv.gz'),
     resources:
+        mem_mb = 8192,
         stdout = lambda wc: os.path.join(config['output'], f"logs/library_table/{wc.target}/{wc.library}_stdout.txt"),
         stderr = lambda wc: os.path.join(config['output'], f"logs/library_table/{wc.target}/{wc.library}_stderr.txt")
     script:
@@ -298,4 +299,3 @@ rule sort_seq:
         cpu_per_task = config['cpu_per_task']
     script:
         f"{config['pipeline']}/scripts/sort_seq.py"
-
