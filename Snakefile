@@ -91,7 +91,7 @@ rule library_table:
         os.path.join(config['output'], 'library_tables/{target}/{library}/processed_ccs.csv.gz'),
         os.path.join(config['output'], 'library_tables/{target}/{library}/filtered_ccs.csv.gz'),
     resources:
-        mem_mb = 8192,
+        mem_mb = 16000,
         stdout = lambda wc: os.path.join(config['output'], f"logs/library_table/{wc.target}/{wc.library}_stdout.txt"),
         stderr = lambda wc: os.path.join(config['output'], f"logs/library_table/{wc.target}/{wc.library}_stderr.txt")
     script:
